@@ -39,11 +39,16 @@ export default function UsersPage() {
   const [openResetPwd, setOpenResetPwd] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>('')
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    email: string
+    name: string
+    password: string
+    role: 'USER' | 'ADMIN'
+  }>({
     email: '',
     name: '',
     password: '',
-    role: Role.USER,
+    role: 'USER',
   })
 
   const [newPassword, setNewPassword] = useState('')
@@ -66,7 +71,7 @@ export default function UsersPage() {
 
     await createUser(form)
     setOpenCreate(false)
-    setFormData({ email: '', name: '', password: '', role: Role.USER })
+    setFormData({ email: '', name: '', password: '', role: 'USER' })
     loadUsers()
   }
 
