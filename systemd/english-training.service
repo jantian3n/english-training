@@ -1,0 +1,19 @@
+﻿[Unit]
+Description=English Training Next.js app
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=__APP_DIR__/.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=NEXT_TELEMETRY_DISABLED=1
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+User=__APP_USER__
+Group=__APP_USER__
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-# 🎓 English Training - AI 智能英语单词记忆系统
+﻿# 馃帗 English Training - AI 鏅鸿兘鑻辫鍗曡瘝璁板繂绯荤粺
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org/)
@@ -6,464 +6,409 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![MUI](https://img.shields.io/badge/MUI-v6-007FFF)](https://mui.com/)
 
-一个基于 AI 的英语单词学习应用,采用间隔重复算法 (SM-2),使用 Next.js 14、Material Design 3 构建,支持 Docker 一键部署。
+涓€涓熀浜?AI 鐨勮嫳璇崟璇嶅涔犲簲鐢?閲囩敤闂撮殧閲嶅绠楁硶 (SM-2),浣跨敤 Next.js 14銆丮aterial Design 3 鏋勫缓,鏀寔 Docker 涓€閿儴缃层€?
+---
+
+## 鉁?鏍稿績鍔熻兘
+
+馃 **AI 鏅鸿兘鐢熸垚** - 浣跨敤 DeepSeek API 鑷姩鐢熸垚渚嬪彞銆佺炕璇戝拰鍙戦煶
+馃摎 **闂撮殧閲嶅** - SuperMemo-2 (SM-2) 绠楁硶,绉戝浼樺寲璁板繂鍛ㄦ湡
+馃懃 **鐢ㄦ埛绠＄悊** - 鍩轰簬瑙掕壊鐨勬潈闄愭帶鍒?(绠＄悊鍛?鏅€氱敤鎴?
+馃帹 **鐜颁唬鍖栫晫闈?* - Material Design 3 璁捐瑙勮寖,娴佺晠鍔ㄧ敾
+馃攼 **瀹夊叏璁よ瘉** - NextAuth.js v5 韬唤楠岃瘉绯荤粺
+馃捑 **鏁版嵁鎸佷箙鍖?* - SQLite 鏁版嵁搴?+ Docker Volume 鎸傝浇
+馃摝 **涓€閿儴缃?* - Docker Compose 閰嶇疆,鍗曞懡浠ゅ畬鎴愰儴缃?馃搳 **杩涘害杩借釜** - 璇︾粏鐨勫涔犵粺璁″拰鏁版嵁鍒嗘瀽
 
 ---
 
-## ✨ 核心功能
-
-🤖 **AI 智能生成** - 使用 DeepSeek API 自动生成例句、翻译和发音
-📚 **间隔重复** - SuperMemo-2 (SM-2) 算法,科学优化记忆周期
-👥 **用户管理** - 基于角色的权限控制 (管理员/普通用户)
-🎨 **现代化界面** - Material Design 3 设计规范,流畅动画
-🔐 **安全认证** - NextAuth.js v5 身份验证系统
-💾 **数据持久化** - SQLite 数据库 + Docker Volume 挂载
-📦 **一键部署** - Docker Compose 配置,单命令完成部署
-📊 **进度追踪** - 详细的学习统计和数据分析
-
----
-
-## 🚀 快速开始
-
-### 本地开发
-
+## 馃殌 蹇€熷紑濮?
+### 鏈湴寮€鍙?
 ```bash
-# 1. 安装依赖
+# 1. 瀹夎渚濊禆
 npm install
 
-# 2. 配置环境变量
+# 2. 閰嶇疆鐜鍙橀噺
 cp .env.example .env
-# 编辑 .env 文件,添加你的 DEEPSEEK_API_KEY
+# 缂栬緫 .env 鏂囦欢,娣诲姞浣犵殑 DEEPSEEK_API_KEY
 
-# 3. 初始化数据库
+# 3. 鍒濆鍖栨暟鎹簱
 npx prisma generate
 npx prisma db push
 npx prisma db seed
 
-# 4. 启动开发服务器
+# 4. 鍚姩寮€鍙戞湇鍔″櫒
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)
+璁块棶 [http://localhost:3000](http://localhost:3000)
 
-**测试账号:**
-- 管理员: `admin@example.com` / `admin123`
-- 普通用户: `user@example.com` / `user123`
+**娴嬭瘯璐﹀彿:**
+- 绠＄悊鍛? `admin@example.com` / `admin123`
+- 鏅€氱敤鎴? `user@example.com` / `user123`
 
-### Docker 部署 (生产环境)
+### VPS 直接部署 (无 Docker)
 
 ```bash
-# 1. 配置环境变量
-cp .env.production .env
-nano .env  # 添加 API 密钥和安全配置
+# 1. 克隆项目
+git clone <your-repo> /opt/english-training
+cd /opt/english-training
 
-# 2. 一键部署
-chmod +x deploy.sh
+# 2. 安装系统依赖(首次)
+sudo bash setup-vps-direct.sh
+
+# 3. 配置环境变量
+cp .env.vps.example .env
+nano .env
+
+# 4. 部署
+chmod +x deploy-vps.sh
+./deploy-vps.sh
+```
+
+使用 systemd 服务名 `english-training`，查看日志:
+`sudo journalctl -u english-training -f`。HTTPS 配置可参考 `nginx.conf`。
+
+### Docker 閮ㄧ讲 (鐢熶骇鐜)
+
+```bash
+# 1. 閰嶇疆鐜鍙橀噺
+cp .env.production .env
+nano .env  # 娣诲姞 API 瀵嗛挜鍜屽畨鍏ㄩ厤缃?
+# 2. 涓€閿儴缃?chmod +x deploy.sh
 ./deploy.sh
 ```
 
-📖 **详细教程:** [中文快速入门指南](QUICKSTART_CN.md) | [安装说明](SETUP.md)
+馃摉 **璇︾粏鏁欑▼:** [涓枃蹇€熷叆闂ㄦ寚鍗梋(QUICKSTART_CN.md) | [瀹夎璇存槑](SETUP.md)
 
 ---
 
-## 🏗️ 系统架构
+## 馃彈锔?绯荤粺鏋舵瀯
 
 ```
-┌─────────────────────────────────────────┐
-│         Next.js 14 (App Router)         │
-│  ┌────────────┐        ┌─────────────┐  │
-│  │   前端界面  │◄──────►│   服务端     │  │
-│  │  (MUI MD3) │        │   Actions   │  │
-│  └────────────┘        └──────┬──────┘  │
-│                               │         │
-│        ┌──────────────────────┼─────┐   │
-│        │                      │     │   │
-│   ┌────▼─────┐         ┌─────▼──┐  │   │
-│   │ 身份认证  │         │ Prisma │  │   │
-│   │NextAuth.js│         │  ORM   │  │   │
-│   └──────────┘         └────┬───┘  │   │
-│                             │      │   │
-└─────────────────────────────┼──────┼───┘
-                              │      │
-                         ┌────▼──┐   │
-                         │SQLite │   │
-                         │ 数据库 │   │
-                         └───────┘   │
-                                     │
-                              ┌──────▼────────┐
-                              │  DeepSeek API │
-                              │   (AI 生成)   │
-                              └───────────────┘
-```
+鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?鈹?        Next.js 14 (App Router)         鈹?鈹? 鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?       鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹? 鈹?鈹? 鈹?  鍓嶇鐣岄潰  鈹傗梽鈹€鈹€鈹€鈹€鈹€鈹€鈻衡攤   鏈嶅姟绔?    鈹? 鈹?鈹? 鈹? (MUI MD3) 鈹?       鈹?  Actions   鈹? 鈹?鈹? 鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?       鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹? 鈹?鈹?                              鈹?        鈹?鈹?       鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹€鈹€鈹?  鈹?鈹?       鈹?                     鈹?    鈹?  鈹?鈹?  鈹屸攢鈹€鈹€鈹€鈻尖攢鈹€鈹€鈹€鈹€鈹?        鈹屸攢鈹€鈹€鈹€鈹€鈻尖攢鈹€鈹? 鈹?  鈹?鈹?  鈹?韬唤璁よ瘉  鈹?        鈹?Prisma 鈹? 鈹?  鈹?鈹?  鈹侼extAuth.js鈹?        鈹? ORM   鈹? 鈹?  鈹?鈹?  鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?        鈹斺攢鈹€鈹€鈹€鈹攢鈹€鈹€鈹? 鈹?  鈹?鈹?                            鈹?     鈹?  鈹?鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹?                              鈹?     鈹?                         鈹屸攢鈹€鈹€鈹€鈻尖攢鈹€鈹?  鈹?                         鈹係QLite 鈹?  鈹?                         鈹?鏁版嵁搴?鈹?  鈹?                         鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹?  鈹?                                     鈹?                              鈹屸攢鈹€鈹€鈹€鈹€鈹€鈻尖攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?                              鈹? DeepSeek API 鈹?                              鈹?  (AI 鐢熸垚)   鈹?                              鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?```
 
-📖 **完整架构文档:** [ARCHITECTURE.md](ARCHITECTURE.md)
+馃摉 **瀹屾暣鏋舵瀯鏂囨。:** [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
-## 📦 技术栈
+## 馃摝 鎶€鏈爤
 
-| 类别 | 技术 |
+| 绫诲埆 | 鎶€鏈?|
 |------|------|
-| **框架** | Next.js 14+ (App Router) |
-| **语言** | TypeScript 5.7+ |
-| **UI 库** | MUI v6 (Material Design 3) |
-| **数据库** | SQLite + Prisma ORM |
-| **认证** | NextAuth.js v5 |
-| **AI 集成** | OpenAI SDK (DeepSeek API) |
-| **部署** | Docker + Docker Compose |
-| **样式** | Emotion (CSS-in-JS) |
+| **妗嗘灦** | Next.js 14+ (App Router) |
+| **璇█** | TypeScript 5.7+ |
+| **UI 搴?* | MUI v6 (Material Design 3) |
+| **鏁版嵁搴?* | SQLite + Prisma ORM |
+| **璁よ瘉** | NextAuth.js v5 |
+| **AI 闆嗘垚** | OpenAI SDK (DeepSeek API) |
+| **閮ㄧ讲** | VPS 直接部署 或 Docker |
+| **鏍峰紡** | Emotion (CSS-in-JS) |
 
 ---
 
-## 🎯 功能详解
+## 馃幆 鍔熻兘璇﹁В
 
-### 用户功能
+### 鐢ㄦ埛鍔熻兘
 
-#### 📚 每日复习队列
-- 基于 SM-2 算法自动计算复习时间
-- 智能排序,优先复习遗忘风险高的单词
-- 自动生成新单词学习任务
+#### 馃摎 姣忔棩澶嶄範闃熷垪
+- 鍩轰簬 SM-2 绠楁硶鑷姩璁＄畻澶嶄範鏃堕棿
+- 鏅鸿兘鎺掑簭,浼樺厛澶嶄範閬楀繕椋庨櫓楂樼殑鍗曡瘝
+- 鑷姩鐢熸垚鏂板崟璇嶅涔犱换鍔?
+#### 馃幃 浜や簰寮忓涔犳祦绋?**涓夋瀛︿範娉?**
+1. **鐪嬪崟璇嶅拰渚嬪彞** 鈫?浠?4 涓€夐」涓€夋嫨姝ｇ‘閲婁箟
+2. **鏌ョ湅姝ｇ‘閲婁箟** 鈫?鎷煎啓鍗曡瘝
+3. **鑾峰緱鍗虫椂鍙嶉** 鈫?鏌ョ湅瀛︿範缁撴灉鍜岃繘搴?
+#### 馃搳 瀛︿範缁熻
+- 鎬诲涔犲崟璇嶆暟
+- 浠婃棩寰呭涔犳暟閲?- 姝ｇ‘鐜囩粺璁?- 瀛︿範杩涘害鍙鍖?
+### 绠＄悊鍛樺姛鑳?
+#### 馃懃 鐢ㄦ埛绠＄悊
+- 鍒涘缓/鍒犻櫎鐢ㄦ埛璐﹀彿
+- 閲嶇疆鐢ㄦ埛瀵嗙爜
+- 鍒嗛厤鐢ㄦ埛瑙掕壊 (绠＄悊鍛?鏅€氱敤鎴?
 
-#### 🎮 交互式学习流程
-**三步学习法:**
-1. **看单词和例句** → 从 4 个选项中选择正确释义
-2. **查看正确释义** → 拼写单词
-3. **获得即时反馈** → 查看学习结果和进度
-
-#### 📊 学习统计
-- 总学习单词数
-- 今日待复习数量
-- 正确率统计
-- 学习进度可视化
-
-### 管理员功能
-
-#### 👥 用户管理
-- 创建/删除用户账号
-- 重置用户密码
-- 分配用户角色 (管理员/普通用户)
-
-#### 📝 单词管理
-- 添加新单词,AI 自动生成:
-  - 英文例句 + 中文翻译
-  - IPA 国际音标
-  - 释义的中文翻译
-  - 测验干扰选项 (3 个错误答案)
-- 删除单词
-- 批量导入 (计划中)
+#### 馃摑 鍗曡瘝绠＄悊
+- 娣诲姞鏂板崟璇?AI 鑷姩鐢熸垚:
+  - 鑻辨枃渚嬪彞 + 涓枃缈昏瘧
+  - IPA 鍥介檯闊虫爣
+  - 閲婁箟鐨勪腑鏂囩炕璇?  - 娴嬮獙骞叉壈閫夐」 (3 涓敊璇瓟妗?
+- 鍒犻櫎鍗曡瘝
+- 鎵归噺瀵煎叆 (璁″垝涓?
 
 ---
 
-## 🗂️ 项目结构
+## 馃梻锔?椤圭洰缁撴瀯
 
 ```
 english-training/
-├── app/                      # Next.js 应用路由
-│   ├── actions.ts           # 服务端操作 (单词/用户/学习)
-│   ├── login/               # 登录页面
-│   ├── learn/               # 学习界面
-│   ├── dashboard/           # 用户统计面板
-│   └── admin/               # 管理员面板
-├── components/              # React 组件
-│   └── LearningCard.tsx    # MD3 学习卡片
-├── lib/                     # 核心逻辑
-│   ├── deepseek.ts         # AI 集成
-│   ├── sm2-algorithm.ts    # 间隔重复算法
-│   ├── prisma.ts           # 数据库客户端
-│   └── theme.ts            # MUI 主题
-├── prisma/                  # 数据库
-│   ├── schema.prisma       # 数据模型定义
-│   └── seed.ts             # 初始化数据
-├── Dockerfile               # 容器构建配置
-├── docker-compose.yml       # 部署配置
-├── deploy.sh               # 一键部署脚本
-└── backup.sh               # 数据库备份脚本
-```
+鈹溾攢鈹€ app/                      # Next.js 搴旂敤璺敱
+鈹?  鈹溾攢鈹€ actions.ts           # 鏈嶅姟绔搷浣?(鍗曡瘝/鐢ㄦ埛/瀛︿範)
+鈹?  鈹溾攢鈹€ login/               # 鐧诲綍椤甸潰
+鈹?  鈹溾攢鈹€ learn/               # 瀛︿範鐣岄潰
+鈹?  鈹溾攢鈹€ dashboard/           # 鐢ㄦ埛缁熻闈㈡澘
+鈹?  鈹斺攢鈹€ admin/               # 绠＄悊鍛橀潰鏉?鈹溾攢鈹€ components/              # React 缁勪欢
+鈹?  鈹斺攢鈹€ LearningCard.tsx    # MD3 瀛︿範鍗＄墖
+鈹溾攢鈹€ lib/                     # 鏍稿績閫昏緫
+鈹?  鈹溾攢鈹€ deepseek.ts         # AI 闆嗘垚
+鈹?  鈹溾攢鈹€ sm2-algorithm.ts    # 闂撮殧閲嶅绠楁硶
+鈹?  鈹溾攢鈹€ prisma.ts           # 鏁版嵁搴撳鎴风
+鈹?  鈹斺攢鈹€ theme.ts            # MUI 涓婚
+鈹溾攢鈹€ prisma/                  # 鏁版嵁搴?鈹?  鈹溾攢鈹€ schema.prisma       # 鏁版嵁妯″瀷瀹氫箟
+鈹?  鈹斺攢鈹€ seed.ts             # 鍒濆鍖栨暟鎹?鈹溾攢鈹€ Dockerfile               # 瀹瑰櫒鏋勫缓閰嶇疆
+鈹溾攢鈹€ docker-compose.yml       # 閮ㄧ讲閰嶇疆
+鈹溾攢鈹€ deploy.sh               # 涓€閿儴缃茶剼鏈?鈹斺攢鈹€ backup.sh               # 鏁版嵁搴撳浠借剼鏈?```
 
 ---
 
-## 🔐 安全特性
-
-✅ Bcrypt 密码加密 (10 轮哈希)
-✅ JWT 会话令牌
-✅ CSRF 跨站请求伪造防护
-✅ 基于角色的访问控制
-✅ Docker 非 root 用户运行
-✅ 环境变量加密存储
-✅ SQL 注入防护 (Prisma ORM)
-✅ XSS 跨站脚本防护 (React 自动转义)
+## 馃攼 瀹夊叏鐗规€?
+鉁?Bcrypt 瀵嗙爜鍔犲瘑 (10 杞搱甯?
+鉁?JWT 浼氳瘽浠ょ墝
+鉁?CSRF 璺ㄧ珯璇锋眰浼€犻槻鎶?鉁?鍩轰簬瑙掕壊鐨勮闂帶鍒?鉁?Docker 闈?root 鐢ㄦ埛杩愯
+鉁?鐜鍙橀噺鍔犲瘑瀛樺偍
+鉁?SQL 娉ㄥ叆闃叉姢 (Prisma ORM)
+鉁?XSS 璺ㄧ珯鑴氭湰闃叉姢 (React 鑷姩杞箟)
 
 ---
 
-## 🐳 Docker 配置详解
+## 馃惓 Docker 閰嶇疆璇﹁В
 
-### SQLite 数据持久化 (关键!)
+### SQLite 鏁版嵁鎸佷箙鍖?(鍏抽敭!)
 
 ```yaml
 volumes:
-  - ./data:/app/prisma/data  # 将容器内数据库映射到宿主机
-```
+  - ./data:/app/prisma/data  # 灏嗗鍣ㄥ唴鏁版嵁搴撴槧灏勫埌瀹夸富鏈?```
 
-**为什么这很重要:**
-- 容器文件系统是临时的,删除容器会丢失数据
-- Volume 挂载将数据持久化到宿主机
-- 即使删除/重建容器,数据依然保留
-- 备份简单: 复制 `./data/dev.db` 即可
-- 恢复简单: 替换 `./data/dev.db` 即可
+**涓轰粈涔堣繖寰堥噸瑕?**
+- 瀹瑰櫒鏂囦欢绯荤粺鏄复鏃剁殑,鍒犻櫎瀹瑰櫒浼氫涪澶辨暟鎹?- Volume 鎸傝浇灏嗘暟鎹寔涔呭寲鍒板涓绘満
+- 鍗充娇鍒犻櫎/閲嶅缓瀹瑰櫒,鏁版嵁渚濈劧淇濈暀
+- 澶囦唤绠€鍗? 澶嶅埗 `./data/dev.db` 鍗冲彲
+- 鎭㈠绠€鍗? 鏇挎崲 `./data/dev.db` 鍗冲彲
 
-### 多阶段构建优化
-
+### 澶氶樁娈垫瀯寤轰紭鍖?
 ```dockerfile
-阶段 1: deps    → 仅安装依赖
-阶段 2: builder → 构建 Next.js 应用
-阶段 3: runner  → 最小化生产运行时
-```
+闃舵 1: deps    鈫?浠呭畨瑁呬緷璧?闃舵 2: builder 鈫?鏋勫缓 Next.js 搴旂敤
+闃舵 3: runner  鈫?鏈€灏忓寲鐢熶骇杩愯鏃?```
 
-**优势:** 镜像体积减少 70% (~100MB vs ~500MB+)
+**浼樺娍:** 闀滃儚浣撶Н鍑忓皯 70% (~100MB vs ~500MB+)
 
 ---
 
-## 📊 学习算法 - SuperMemo-2 (SM-2)
+## 馃搳 瀛︿範绠楁硶 - SuperMemo-2 (SM-2)
 
-### 质量评分 (0-5 分)
+### 璐ㄩ噺璇勫垎 (0-5 鍒?
 
-- **0 分** = 完全不记得
-- **1 分** = 答错,但答案看起来眼熟
-- **2 分** = 答错,但觉得答案容易回忆
-- **3 分** = 答对,但非常困难
-- **4 分** = 答对,但犹豫了一下
-- **5 分** = 完美答对
+- **0 鍒?* = 瀹屽叏涓嶈寰?- **1 鍒?* = 绛旈敊,浣嗙瓟妗堢湅璧锋潵鐪肩啛
+- **2 鍒?* = 绛旈敊,浣嗚寰楃瓟妗堝鏄撳洖蹇?- **3 鍒?* = 绛斿,浣嗛潪甯稿洶闅?- **4 鍒?* = 绛斿,浣嗙姽璞簡涓€涓?- **5 鍒?* = 瀹岀編绛斿
 
-### 算法逻辑
+### 绠楁硶閫昏緫
 
 ```javascript
-if (质量 < 3) {
-  重复次数 = 0
-  间隔 = 1  // 明天再复习
-} else {
-  if (重复次数 === 0) 间隔 = 1      // 第一次答对: 1 天后
-  else if (重复次数 === 1) 间隔 = 6  // 第二次答对: 6 天后
-  else 间隔 = 间隔 * 难度因子        // 之后: 指数增长
+if (璐ㄩ噺 < 3) {
+  閲嶅娆℃暟 = 0
+  闂撮殧 = 1  // 鏄庡ぉ鍐嶅涔?} else {
+  if (閲嶅娆℃暟 === 0) 闂撮殧 = 1      // 绗竴娆＄瓟瀵? 1 澶╁悗
+  else if (閲嶅娆℃暟 === 1) 闂撮殧 = 6  // 绗簩娆＄瓟瀵? 6 澶╁悗
+  else 闂撮殧 = 闂撮殧 * 闅惧害鍥犲瓙        // 涔嬪悗: 鎸囨暟澧為暱
 
-  重复次数++
+  閲嶅娆℃暟++
 }
 
-// 更新难度因子
-难度因子 = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-if (难度因子 < 1.3) 难度因子 = 1.3
+// 鏇存柊闅惧害鍥犲瓙
+闅惧害鍥犲瓙 = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+if (闅惧害鍥犲瓙 < 1.3) 闅惧害鍥犲瓙 = 1.3
 ```
 
-**效果:** 根据记忆强度动态调整复习间隔,实现高效记忆
+**鏁堟灉:** 鏍规嵁璁板繂寮哄害鍔ㄦ€佽皟鏁村涔犻棿闅?瀹炵幇楂樻晥璁板繂
 
 ---
 
-## 📝 完整文档
+## 馃摑 瀹屾暣鏂囨。
 
-| 文档 | 说明 |
+| 鏂囨。 | 璇存槑 |
 |------|------|
-| [README_CN.md](README_CN.md) | 本文件 - 中文项目说明 |
-| [README.md](README.md) | 英文项目说明 |
-| [QUICKSTART_CN.md](QUICKSTART_CN.md) | 中文快速入门指南 |
-| [SETUP.md](SETUP.md) | 详细安装步骤 |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 技术架构文档 |
-| [CHEATSHEET.md](CHEATSHEET.md) | 常用命令速查表 |
-| [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | 项目完整总结 |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献指南 |
+| [README_CN.md](README_CN.md) | 鏈枃浠?- 涓枃椤圭洰璇存槑 |
+| [README.md](README.md) | 鑻辨枃椤圭洰璇存槑 |
+| [QUICKSTART_CN.md](QUICKSTART_CN.md) | 涓枃蹇€熷叆闂ㄦ寚鍗?|
+| [SETUP.md](SETUP.md) | 璇︾粏瀹夎姝ラ |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 鎶€鏈灦鏋勬枃妗?|
+| [CHEATSHEET.md](CHEATSHEET.md) | 甯哥敤鍛戒护閫熸煡琛?|
+| [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | 椤圭洰瀹屾暣鎬荤粨 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 璐＄尞鎸囧崡 |
 
 ---
 
-## 🛠️ 常用命令
+## 馃洜锔?甯哥敤鍛戒护
 
-### 开发环境
-```bash
-npm run dev          # 启动开发服务器
-npx prisma studio    # 打开数据库可视化界面
-npx prisma generate  # 生成 Prisma Client
+### 寮€鍙戠幆澧?```bash
+npm run dev          # 鍚姩寮€鍙戞湇鍔″櫒
+npx prisma studio    # 鎵撳紑鏁版嵁搴撳彲瑙嗗寲鐣岄潰
+npx prisma generate  # 鐢熸垚 Prisma Client
 ```
 
-### Docker 部署
+### Docker 閮ㄧ讲
 ```bash
-./deploy.sh          # 一键部署/更新
-docker-compose logs -f  # 查看实时日志
-./backup.sh          # 备份数据库
-./restore.sh         # 恢复数据库
-./health-check.sh    # 系统健康检查
-```
+./deploy.sh          # 涓€閿儴缃?鏇存柊
+docker-compose logs -f  # 鏌ョ湅瀹炴椂鏃ュ織
+./backup.sh          # 澶囦唤鏁版嵁搴?./restore.sh         # 鎭㈠鏁版嵁搴?./health-check.sh    # 绯荤粺鍋ュ悍妫€鏌?```
 
-### 数据库操作
-```bash
-sqlite3 ./data/dev.db           # 访问数据库命令行
-npx prisma db push              # 应用 schema 更改
-npx prisma db seed              # 填充示例数据
+### 鏁版嵁搴撴搷浣?```bash
+sqlite3 ./data/dev.db           # 璁块棶鏁版嵁搴撳懡浠よ
+npx prisma db push              # 搴旂敤 schema 鏇存敼
+npx prisma db seed              # 濉厖绀轰緥鏁版嵁
 ```
 
 ---
 
-## 🔄 部署工作流
-
-### VPS 首次部署
+## 馃攧 閮ㄧ讲宸ヤ綔娴?
+### VPS 棣栨閮ㄧ讲
 
 ```bash
-# 1. 安装 Docker (使用官方脚本)
+# 1. 瀹夎 Docker (浣跨敤瀹樻柟鑴氭湰)
 curl -fsSL https://get.docker.com | sudo sh
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# 2. 克隆仓库
+# 2. 鍏嬮殕浠撳簱
 git clone https://github.com/jantian3n/english-training.git /opt/english-training
 cd /opt/english-training
 
-# 3. 配置环境变量
+# 3. 閰嶇疆鐜鍙橀噺
 cp .env.production .env
-nano .env  # 添加你的密钥
+nano .env  # 娣诲姞浣犵殑瀵嗛挜
 
-# 4. 生成安全密钥
-openssl rand -base64 32  # 用于 NEXTAUTH_SECRET
+# 4. 鐢熸垚瀹夊叏瀵嗛挜
+openssl rand -base64 32  # 鐢ㄤ簬 NEXTAUTH_SECRET
 
-# 5. 一键部署
-./deploy.sh
+# 5. 涓€閿儴缃?./deploy.sh
 ```
 
-### 更新部署
+### 鏇存柊閮ㄧ讲
 
 ```bash
-# 一条命令完成所有更新操作
-./deploy.sh
+# 涓€鏉″懡浠ゅ畬鎴愭墍鏈夋洿鏂版搷浣?./deploy.sh
 ```
 
-**脚本自动执行:**
-1. 从 Git 拉取最新代码
-2. 停止现有容器
-3. 构建新的 Docker 镜像
-4. 启动更新后的容器
-5. 运行健康检查
-
-### 自动备份
+**鑴氭湰鑷姩鎵ц:**
+1. 浠?Git 鎷夊彇鏈€鏂颁唬鐮?2. 鍋滄鐜版湁瀹瑰櫒
+3. 鏋勫缓鏂扮殑 Docker 闀滃儚
+4. 鍚姩鏇存柊鍚庣殑瀹瑰櫒
+5. 杩愯鍋ュ悍妫€鏌?
+### 鑷姩澶囦唤
 
 ```bash
-# 设置定时任务 (每天凌晨 2 点自动备份)
+# 璁剧疆瀹氭椂浠诲姟 (姣忓ぉ鍑屾櫒 2 鐐硅嚜鍔ㄥ浠?
 crontab -e
 
-# 添加这行:
+# 娣诲姞杩欒:
 0 2 * * * cd /opt/english-training && ./backup.sh >> /opt/english-training/logs/backup.log 2>&1
 ```
 
 ---
 
-## 🤝 参与贡献
+## 馃 鍙備笌璐＄尞
 
-欢迎贡献代码!请查看 [贡献指南](CONTRIBUTING.md)。
-
-**可以贡献的方向:**
-- CSV/Excel 批量导入单词
-- 移动端应用 (React Native)
-- 语音发音功能 (TTS)
-- 进度可视化图表
-- 多语言支持
-- 自动化测试
-- 性能优化
+娆㈣繋璐＄尞浠ｇ爜!璇锋煡鐪?[璐＄尞鎸囧崡](CONTRIBUTING.md)銆?
+**鍙互璐＄尞鐨勬柟鍚?**
+- CSV/Excel 鎵归噺瀵煎叆鍗曡瘝
+- 绉诲姩绔簲鐢?(React Native)
+- 璇煶鍙戦煶鍔熻兘 (TTS)
+- 杩涘害鍙鍖栧浘琛?- 澶氳瑷€鏀寔
+- 鑷姩鍖栨祴璇?- 鎬ц兘浼樺寲
 
 ---
 
-## 📄 开源协议
+## 馃搫 寮€婧愬崗璁?
+鏈」鐩噰鐢?MIT 鍗忚 - 鏌ョ湅 [LICENSE](LICENSE) 鏂囦欢浜嗚В璇︽儏銆?
+---
 
-本项目采用 MIT 协议 - 查看 [LICENSE](LICENSE) 文件了解详情。
+## 馃檹 鑷磋阿
+
+- **Next.js** - React 鍏ㄦ爤妗嗘灦
+- **MUI** - Material Design 缁勪欢搴?- **Prisma** - 鐜颁唬鍖栨暟鎹簱 ORM
+- **NextAuth.js** - 韬唤璁よ瘉瑙ｅ喅鏂规
+- **DeepSeek** - AI API 鎻愪緵鍟?- **SuperMemo** - SM-2 绠楁硶
 
 ---
 
-## 🙏 致谢
-
-- **Next.js** - React 全栈框架
-- **MUI** - Material Design 组件库
-- **Prisma** - 现代化数据库 ORM
-- **NextAuth.js** - 身份认证解决方案
-- **DeepSeek** - AI API 提供商
-- **SuperMemo** - SM-2 算法
+## 馃摓 鏀寔涓庡弽棣?
+- 馃摉 鏌ョ湅 [瀹屾暣鏂囨。](README.md)
+- 馃悰 [鎻愪氦闂](https://github.com/jantian3n/english-training/issues)
+- 馃挰 [鍙備笌璁ㄨ](https://github.com/jantian3n/english-training/discussions)
 
 ---
 
-## 📞 支持与反馈
+## 馃搱 寮€鍙戣矾绾垮浘
 
-- 📖 查看 [完整文档](README.md)
-- 🐛 [提交问题](https://github.com/jantian3n/english-training/issues)
-- 💬 [参与讨论](https://github.com/jantian3n/english-training/discussions)
-
----
-
-## 📈 开发路线图
-
-- [x] 基础学习流程
-- [x] SM-2 间隔重复算法
-- [x] AI 内容生成
-- [x] 管理员面板
-- [x] Docker 部署
-- [ ] CSV 批量导入/导出
-- [ ] 移动端应用
-- [ ] 语音发音
-- [ ] 社交功能 (排行榜)
-- [ ] 高级数据分析
+- [x] 鍩虹瀛︿範娴佺▼
+- [x] SM-2 闂撮殧閲嶅绠楁硶
+- [x] AI 鍐呭鐢熸垚
+- [x] 绠＄悊鍛橀潰鏉?- [x] Docker 閮ㄧ讲
+- [ ] CSV 鎵归噺瀵煎叆/瀵煎嚭
+- [ ] 绉诲姩绔簲鐢?- [ ] 璇煶鍙戦煶
+- [ ] 绀句氦鍔熻兘 (鎺掕姒?
+- [ ] 楂樼骇鏁版嵁鍒嗘瀽
 
 ---
 
-## 💡 使用场景
+## 馃挕 浣跨敤鍦烘櫙
 
-✅ **个人学习** - 日常英语词汇积累
-✅ **学校教学** - 教师布置单词学习任务
-✅ **企业培训** - 员工英语能力提升
-✅ **考试备考** - 托福/雅思/GRE 词汇准备
-✅ **自建服务** - 部署到自己的服务器
+鉁?**涓汉瀛︿範** - 鏃ュ父鑻辫璇嶆眹绉疮
+鉁?**瀛︽牎鏁欏** - 鏁欏笀甯冪疆鍗曡瘝瀛︿範浠诲姟
+鉁?**浼佷笟鍩硅** - 鍛樺伐鑻辫鑳藉姏鎻愬崌
+鉁?**鑰冭瘯澶囪€?* - 鎵樼/闆呮€?GRE 璇嶆眹鍑嗗
+鉁?**鑷缓鏈嶅姟** - 閮ㄧ讲鍒拌嚜宸辩殑鏈嶅姟鍣?
+---
+
+## 馃幆 鎬ц兘鎸囨爣
+
+- **鏀寔骞跺彂鐢ㄦ埛:** 100-500 浜?- **鏁版嵁搴撳閲?** < 10GB (SQLite 鏈€浣?
+- **闀滃儚澶у皬:** ~100MB (浼樺寲鍚?
+- **鍐峰惎鍔ㄦ椂闂?** < 10 绉?- **鍐呭瓨鍗犵敤:** ~200MB
+- **鍝嶅簲鏃堕棿:** < 100ms (鏈湴)
 
 ---
 
-## 🎯 性能指标
+## 馃敡 绯荤粺瑕佹眰
 
-- **支持并发用户:** 100-500 人
-- **数据库容量:** < 10GB (SQLite 最佳)
-- **镜像大小:** ~100MB (优化后)
-- **冷启动时间:** < 10 秒
-- **内存占用:** ~200MB
-- **响应时间:** < 100ms (本地)
-
----
-
-## 🔧 系统要求
-
-### 开发环境
-- Node.js 20+
-- npm 或 yarn
+### 寮€鍙戠幆澧?- Node.js 20+
+- npm 鎴?yarn
 - Git
 
-### 生产环境 (Docker)
+### 鐢熶骇鐜 (Docker)
 - Docker 20+
 - Docker Compose 2+
 - 1GB+ RAM
-- 10GB+ 磁盘空间
+- 10GB+ 纾佺洏绌洪棿
 
-### VPS 推荐配置
-- CPU: 1 核心
-- 内存: 2GB
-- 磁盘: 20GB SSD
-- 带宽: 1Mbps+
-
----
-
-## 📸 功能截图
-
-> 提示: 可以在这里添加应用截图展示
-
-- 登录界面
-- 学习卡片
-- 统计面板
-- 管理后台
+### VPS 鎺ㄨ崘閰嶇疆
+- CPU: 1 鏍稿績
+- 鍐呭瓨: 2GB
+- 纾佺洏: 20GB SSD
+- 甯﹀: 1Mbps+
 
 ---
 
-**使用 ❤️ 和 Next.js 构建**
+## 馃摳 鍔熻兘鎴浘
 
-**版本:** 1.0.0
-**状态:** ✅ 生产就绪
-**最后更新:** 2026-01-08
+> 鎻愮ず: 鍙互鍦ㄨ繖閲屾坊鍔犲簲鐢ㄦ埅鍥惧睍绀?
+- 鐧诲綍鐣岄潰
+- 瀛︿範鍗＄墖
+- 缁熻闈㈡澘
+- 绠＄悊鍚庡彴
 
 ---
 
-⭐ **如果这个项目对你有帮助,请给个 Star!**
+**浣跨敤 鉂わ笍 鍜?Next.js 鏋勫缓**
+
+**鐗堟湰:** 1.0.0
+**鐘舵€?** 鉁?鐢熶骇灏辩华
+**鏈€鍚庢洿鏂?** 2026-01-08
+
+---
+
+猸?**濡傛灉杩欎釜椤圭洰瀵逛綘鏈夊府鍔?璇风粰涓?Star!**
+
+
+
+
+

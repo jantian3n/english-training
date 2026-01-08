@@ -1,4 +1,4 @@
-# ============================================
+﻿# ============================================
 # Quick Setup Guide
 # ============================================
 
@@ -19,7 +19,37 @@
 4. Run development server:
    npm run dev
 
-## VPS Deployment Setup
+## VPS Direct Deployment (No Docker)
+
+1. First-time setup on VPS (run as root):
+
+   # Clone repository
+   git clone <your-repo> /opt/english-training
+   cd /opt/english-training
+
+   # Install system dependencies + Node.js
+   sudo bash setup-vps-direct.sh
+   # Optional overrides:
+   # APP_DIR=/opt/english-training APP_USER=english-training sudo bash setup-vps-direct.sh
+
+2. Configure environment:
+
+   cp .env.vps.example .env
+   nano .env
+
+   # MUST CHANGE THESE:
+   NEXTAUTH_SECRET="generate-random-32-chars"
+   DEEPSEEK_API_KEY="sk-your-key"
+   ADMIN_PASSWORD="strong-password"
+
+3. Deploy:
+
+   chmod +x deploy-vps.sh
+   ./deploy-vps.sh
+
+   # If you plan to use Nginx, use nginx.conf as a template and close port 3000 in ufw.
+
+## Docker Deployment (Optional)
 
 1. First-time setup on VPS:
 
@@ -53,7 +83,26 @@
 
 openssl rand -base64 32
 
-## Useful Docker Commands
+## Useful Commands
+
+### Direct VPS
+
+# View logs
+sudo journalctl -u english-training -f
+
+# Restart service
+sudo systemctl restart english-training
+
+# Health check
+./health-check-vps.sh
+
+# Backup database
+./backup.sh
+
+# Restore database
+./restore-vps.sh
+
+### Docker
 
 # View logs
 docker-compose logs -f
@@ -87,22 +136,3 @@ npx prisma db push
 
 # Reset database (WARNING: deletes all data)
 npx prisma migrate reset
-
-## Troubleshooting
-
-### Container won't start
-docker-compose logs
-
-### Database locked error
-docker-compose down
-docker-compose up -d
-
-### Need to recreate database
-docker-compose down
-rm -rf ./data/dev.db
-docker-compose up -d
-
-### Port 3000 already in use
-# Change port in docker-compose.yml:
-ports:
-  - "3001:3000"  # Use port 3001 instead

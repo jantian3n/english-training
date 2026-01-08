@@ -1,4 +1,4 @@
-# 🎓 English Training - Complete Project
+﻿# 馃帗 English Training - Complete Project
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org/)
@@ -6,26 +6,26 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![MUI](https://img.shields.io/badge/MUI-v6-007FFF)](https://mui.com/)
 
-> **[中文文档](README_CN.md)** | **English Documentation**
+> **[涓枃鏂囨。](README_CN.md)** | **English Documentation**
 
-An AI-powered English vocabulary learning application with spaced repetition (SM-2 algorithm), built with Next.js 14, Material Design 3, and deployed via Docker.
-
----
-
-## ✨ Features
-
-🤖 **AI-Powered Content** - Automatic example sentence and translation generation using DeepSeek API
-📚 **Spaced Repetition** - SuperMemo-2 (SM-2) algorithm for optimal learning intervals
-👥 **User Management** - Role-based access control (Admin/User)
-🎨 **Modern UI** - Material Design 3 with MUI v6
-🔐 **Secure Auth** - NextAuth.js v5 with credentials provider
-💾 **Data Persistence** - SQLite with Docker volume mounting
-📦 **Easy Deployment** - One-command Docker deployment script
-📊 **Progress Tracking** - Detailed learning statistics and analytics
+An AI-powered English vocabulary learning application with spaced repetition (SM-2 algorithm), built with Next.js 14, Material Design 3, and deployed via Docker or direct VPS.
 
 ---
 
-## 🚀 Quick Start
+## 鉁?Features
+
+馃 **AI-Powered Content** - Automatic example sentence and translation generation using DeepSeek API
+馃摎 **Spaced Repetition** - SuperMemo-2 (SM-2) algorithm for optimal learning intervals
+馃懃 **User Management** - Role-based access control (Admin/User)
+馃帹 **Modern UI** - Material Design 3 with MUI v6
+馃攼 **Secure Auth** - NextAuth.js v5 with credentials provider
+馃捑 **Data Persistence** - SQLite with file-based persistence
+馃摝 **Easy Deployment** - One-command VPS deployment scripts
+馃搳 **Progress Tracking** - Detailed learning statistics and analytics
+
+---
+
+## 馃殌 Quick Start
 
 ### Local Development
 
@@ -52,6 +52,36 @@ Visit [http://localhost:3000](http://localhost:3000)
 - Admin: `admin@example.com` / `admin123`
 - User: `user@example.com` / `user123`
 
+### VPS Direct Deployment (No Docker)
+
+```bash
+# 1. Clone repository
+git clone <your-repo> /opt/english-training
+cd /opt/english-training
+
+# 2. Install server dependencies (first time)
+sudo bash setup-vps-direct.sh
+
+# 3. Configure environment
+cp .env.vps.example .env
+nano .env
+
+# 4. Deploy
+chmod +x deploy-vps.sh
+./deploy-vps.sh
+```
+
+This uses a systemd service named `english-training`. For logs run:
+`sudo journalctl -u english-training -f`. For HTTPS, see `nginx.conf`.
+
+### Direct VPS
+```bash
+./deploy-vps.sh          # Deploy/update
+sudo journalctl -u english-training -f  # View logs
+./health-check-vps.sh    # Health check
+./backup.sh              # Backup database
+./restore-vps.sh         # Restore database
+```
 ### Docker Deployment
 
 ```bash
@@ -64,44 +94,20 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-📖 **Detailed guides:** [QUICKSTART_CN.md](QUICKSTART_CN.md) | [SETUP.md](SETUP.md)
+馃摉 **Detailed guides:** [QUICKSTART_CN.md](QUICKSTART_CN.md) | [SETUP.md](SETUP.md)
 
 ---
 
-## 🏗️ Architecture
+## 馃彈锔?Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│         Next.js 14 (App Router)         │
-│  ┌────────────┐        ┌─────────────┐  │
-│  │  Frontend  │◄──────►│   Server    │  │
-│  │  (MUI MD3) │        │   Actions   │  │
-│  └────────────┘        └──────┬──────┘  │
-│                               │         │
-│        ┌──────────────────────┼─────┐   │
-│        │                      │     │   │
-│   ┌────▼─────┐         ┌─────▼──┐  │   │
-│   │ NextAuth │         │ Prisma │  │   │
-│   │   (v5)   │         │  ORM   │  │   │
-│   └──────────┘         └────┬───┘  │   │
-│                             │      │   │
-└─────────────────────────────┼──────┼───┘
-                              │      │
-                         ┌────▼──┐   │
-                         │SQLite │   │
-                         │ (DB)  │   │
-                         └───────┘   │
-                                     │
-                              ┌──────▼────────┐
-                              │  DeepSeek API │
-                              └───────────────┘
-```
+鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?鈹?        Next.js 14 (App Router)         鈹?鈹? 鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?       鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹? 鈹?鈹? 鈹? Frontend  鈹傗梽鈹€鈹€鈹€鈹€鈹€鈹€鈻衡攤   Server    鈹? 鈹?鈹? 鈹? (MUI MD3) 鈹?       鈹?  Actions   鈹? 鈹?鈹? 鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?       鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹? 鈹?鈹?                              鈹?        鈹?鈹?       鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹€鈹€鈹?  鈹?鈹?       鈹?                     鈹?    鈹?  鈹?鈹?  鈹屸攢鈹€鈹€鈹€鈻尖攢鈹€鈹€鈹€鈹€鈹?        鈹屸攢鈹€鈹€鈹€鈹€鈻尖攢鈹€鈹? 鈹?  鈹?鈹?  鈹?NextAuth 鈹?        鈹?Prisma 鈹? 鈹?  鈹?鈹?  鈹?  (v5)   鈹?        鈹? ORM   鈹? 鈹?  鈹?鈹?  鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?        鈹斺攢鈹€鈹€鈹€鈹攢鈹€鈹€鈹? 鈹?  鈹?鈹?                            鈹?     鈹?  鈹?鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹€鈹€鈹€鈹尖攢鈹€鈹€鈹?                              鈹?     鈹?                         鈹屸攢鈹€鈹€鈹€鈻尖攢鈹€鈹?  鈹?                         鈹係QLite 鈹?  鈹?                         鈹?(DB)  鈹?  鈹?                         鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹?  鈹?                                     鈹?                              鈹屸攢鈹€鈹€鈹€鈹€鈹€鈻尖攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?                              鈹? DeepSeek API 鈹?                              鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?```
 
-📖 **Full architecture details:** [ARCHITECTURE.md](ARCHITECTURE.md)
+馃摉 **Full architecture details:** [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
-## 📦 Tech Stack
+## 馃摝 Tech Stack
 
 | Category | Technology |
 |----------|-----------|
@@ -111,19 +117,19 @@ chmod +x deploy.sh
 | **Database** | SQLite + Prisma ORM |
 | **Authentication** | NextAuth.js v5 |
 | **AI Integration** | OpenAI SDK (DeepSeek API) |
-| **Deployment** | Docker + Docker Compose |
+| **Deployment** | Direct VPS (systemd) or Docker |
 | **Styling** | Emotion (CSS-in-JS) |
 
 ---
 
-## 🎯 Core Features
+## 馃幆 Core Features
 
 ### For Users
 
 - **Daily Review Queue** - Automatic scheduling based on SM-2 algorithm
 - **Interactive Learning** - Three-step learning flow:
-  1. See word + example → Choose correct definition (4 options)
-  2. View definition → Type word spelling
+  1. See word + example 鈫?Choose correct definition (4 options)
+  2. View definition 鈫?Type word spelling
   3. Get instant feedback with performance tracking
 - **Progress Dashboard** - Track learning statistics and accuracy
 - **Spaced Repetition** - Optimal review intervals for long-term retention
@@ -139,48 +145,48 @@ chmod +x deploy.sh
 
 ---
 
-## 🗂️ Project Structure
+## 馃梻锔?Project Structure
 
 ```
 english-training/
-├── app/                      # Next.js App Router
-│   ├── actions.ts           # Server Actions
-│   ├── login/               # Authentication
-│   ├── learn/               # Learning interface
-│   ├── dashboard/           # User stats
-│   └── admin/               # Admin panel
-├── components/              # React components
-│   └── LearningCard.tsx    # MD3 learning UI
-├── lib/                     # Core logic
-│   ├── deepseek.ts         # AI integration
-│   ├── sm2-algorithm.ts    # Spaced repetition
-│   ├── prisma.ts           # Database client
-│   └── theme.ts            # MUI theme
-├── prisma/                  # Database
-│   ├── schema.prisma       # Schema definition
-│   └── seed.ts             # Initial data
-├── Dockerfile               # Container build
-├── docker-compose.yml       # Deployment config
-├── deploy.sh               # Deployment script
-└── backup.sh               # Backup script
+鈹溾攢鈹€ app/                      # Next.js App Router
+鈹?  鈹溾攢鈹€ actions.ts           # Server Actions
+鈹?  鈹溾攢鈹€ login/               # Authentication
+鈹?  鈹溾攢鈹€ learn/               # Learning interface
+鈹?  鈹溾攢鈹€ dashboard/           # User stats
+鈹?  鈹斺攢鈹€ admin/               # Admin panel
+鈹溾攢鈹€ components/              # React components
+鈹?  鈹斺攢鈹€ LearningCard.tsx    # MD3 learning UI
+鈹溾攢鈹€ lib/                     # Core logic
+鈹?  鈹溾攢鈹€ deepseek.ts         # AI integration
+鈹?  鈹溾攢鈹€ sm2-algorithm.ts    # Spaced repetition
+鈹?  鈹溾攢鈹€ prisma.ts           # Database client
+鈹?  鈹斺攢鈹€ theme.ts            # MUI theme
+鈹溾攢鈹€ prisma/                  # Database
+鈹?  鈹溾攢鈹€ schema.prisma       # Schema definition
+鈹?  鈹斺攢鈹€ seed.ts             # Initial data
+鈹溾攢鈹€ Dockerfile               # Container build
+鈹溾攢鈹€ docker-compose.yml       # Deployment config
+鈹溾攢鈹€ deploy.sh               # Deployment script
+鈹斺攢鈹€ backup.sh               # Backup script
 ```
 
 ---
 
-## 🔐 Security
+## 馃攼 Security
 
-✅ Bcrypt password hashing (10 rounds)
-✅ JWT session tokens
-✅ CSRF protection
-✅ Role-based access control
-✅ Non-root Docker user
-✅ Environment variable secrets
-✅ SQL injection prevention (Prisma ORM)
-✅ XSS protection (React auto-escaping)
+鉁?Bcrypt password hashing (10 rounds)
+鉁?JWT session tokens
+鉁?CSRF protection
+鉁?Role-based access control
+鉁?Non-root Docker user
+鉁?Environment variable secrets
+鉁?SQL injection prevention (Prisma ORM)
+鉁?XSS protection (React auto-escaping)
 
 ---
 
-## 🐳 Docker Configuration
+## 馃惓 Docker Configuration
 
 ### SQLite Data Persistence (Critical!)
 
@@ -199,16 +205,16 @@ volumes:
 ### Multi-stage Build
 
 ```dockerfile
-Stage 1: deps    → Install dependencies only
-Stage 2: builder → Build Next.js application
-Stage 3: runner  → Minimal production runtime
+Stage 1: deps    鈫?Install dependencies only
+Stage 2: builder 鈫?Build Next.js application
+Stage 3: runner  鈫?Minimal production runtime
 ```
 
 **Benefits:** 70% smaller image size (~100MB vs ~500MB+)
 
 ---
 
-## 📊 Learning Algorithm
+## 馃搳 Learning Algorithm
 
 ### SuperMemo-2 (SM-2)
 
@@ -239,12 +245,12 @@ if (easeFactor < 1.3) easeFactor = 1.3
 
 ---
 
-## 📝 Documentation
+## 馃摑 Documentation
 
 | Document | Description |
 |----------|-------------|
 | [README.md](README.md) | This file - project overview |
-| [QUICKSTART_CN.md](QUICKSTART_CN.md) | 中文快速开始指南 |
+| [QUICKSTART_CN.md](QUICKSTART_CN.md) | 涓枃蹇€熷紑濮嬫寚鍗?|
 | [SETUP.md](SETUP.md) | Detailed setup instructions |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture |
 | [CHEATSHEET.md](CHEATSHEET.md) | Command reference |
@@ -253,7 +259,7 @@ if (easeFactor < 1.3) easeFactor = 1.3
 
 ---
 
-## 🛠️ Useful Commands
+## 馃洜锔?Useful Commands
 
 ### Development
 ```bash
@@ -262,6 +268,14 @@ npx prisma studio    # Database GUI
 npx prisma generate  # Generate Prisma client
 ```
 
+### Direct VPS
+```bash
+./deploy-vps.sh          # Deploy/update
+sudo journalctl -u english-training -f  # View logs
+./health-check-vps.sh    # Health check
+./backup.sh              # Backup database
+./restore-vps.sh         # Restore database
+```
 ### Docker
 ```bash
 ./deploy.sh          # Deploy/update
@@ -280,7 +294,17 @@ npx prisma db seed              # Seed data
 
 ---
 
-## 🔄 Deployment Workflow
+## 馃攧 Deployment Workflow
+
+### VPS Direct Deployment
+
+```bash
+# 1. Install server dependencies (first time)
+sudo bash setup-vps-direct.sh
+
+# 2. Deploy/update
+./deploy-vps.sh
+```
 
 ### VPS First-Time Setup
 
@@ -316,7 +340,7 @@ The script automatically:
 
 ---
 
-## 🤝 Contributing
+## 馃 Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -330,13 +354,13 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 ---
 
-## 📄 License
+## 馃搫 License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## 馃檹 Acknowledgments
 
 - **Next.js** - React framework
 - **MUI** - Material Design components
@@ -347,15 +371,15 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ---
 
-## 📞 Support
+## 馃摓 Support
 
-- 📖 Check [Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/yourusername/english-training/issues)
-- 💬 [Discussions](https://github.com/yourusername/english-training/discussions)
+- 馃摉 Check [Documentation](README.md)
+- 馃悰 [Report Issues](https://github.com/yourusername/english-training/issues)
+- 馃挰 [Discussions](https://github.com/yourusername/english-training/discussions)
 
 ---
 
-## 📈 Roadmap
+## 馃搱 Roadmap
 
 - [x] Basic learning flow
 - [x] SM-2 algorithm
@@ -370,8 +394,19 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ---
 
-**Built with ❤️ using Next.js and Claude Code**
+**Built with 鉂わ笍 using Next.js and Claude Code**
 
 **Version:** 1.0.0
 **Status:** Production Ready
 **Last Updated:** 2026-01-08
+
+
+
+
+
+
+
+
+
+
+
