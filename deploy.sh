@@ -11,7 +11,7 @@ echo "🚀 Starting deployment..."
 
 # Configuration
 PROJECT_DIR="/opt/english-training"
-REPO_URL="https://github.com/yourusername/english-training.git"  # Change this!
+REPO_URL="https://github.com/jantian3n/english-training.git"
 BRANCH="main"
 
 # Colors for output
