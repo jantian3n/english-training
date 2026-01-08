@@ -1,0 +1,67 @@
+# ============================================
+# Docker Compose Configuration
+# SQLite Database Persistence via Volume Mounting
+# ============================================
+
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: english-training-web
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      # Database URL - CRITICAL: Points to persistent volume
+      DATABASE_URL: "file:/app/prisma/data/dev.db"
+
+      # NextAuth.js Configuration
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}"
+
+      # DeepSeek API
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY}"
+
+      # Admin Credentials
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@example.com}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin123}"
+
+      # Next.js
+      NODE_ENV: production
+
+    volumes:
+      # ============================================
+      # CRITICAL: SQLite Database Persistence
+      # Maps container's /app/prisma/data to host's ./data
+      # This ensures database survives container restarts/deletions
+      # ============================================
+      - ./data:/app/prisma/data
+
+      # Optional: Mount logs directory
+      - ./logs:/app/logs
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - english-training-network
+
+networks:
+  english-training-network:
+    driver: bridge
+
+# Volume persistence explanation:
+# - Host directory ./data is created automatically
+# - SQLite database file is stored in ./data/dev.db
+# - Even if you run `docker-compose down`, data persists
+# - To backup: simply copy ./data/dev.db
+# - To restore: replace ./data/dev.db with backup

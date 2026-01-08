@@ -1,0 +1,38 @@
+# SQLite database (auto-generated)
+*.db
+*.db-journal
+
+# Backups
+backups/
+
+# Data directory (mounted from Docker)
+data/
+
+# Logs
+logs/
+*.log
+
+# Node
+node_modules/
+.npm
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env*.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
