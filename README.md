@@ -6,6 +6,8 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![MUI](https://img.shields.io/badge/MUI-v6-007FFF)](https://mui.com/)
 
+> **[中文文档](README_CN.md)** | **English Documentation**
+
 An AI-powered English vocabulary learning application with spaced repetition (SM-2 algorithm), built with Next.js 14, Material Design 3, and deployed via Docker.
 
 ---
