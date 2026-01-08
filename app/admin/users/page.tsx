@@ -171,11 +171,11 @@ export default function UsersPage() {
             select
             label="Role"
             value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value as 'USER' | 'ADMIN' })}
             margin="normal"
           >
-            <MenuItem value={Role.USER}>User</MenuItem>
-            <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+            <MenuItem value="USER">User</MenuItem>
+            <MenuItem value="ADMIN">Admin</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
