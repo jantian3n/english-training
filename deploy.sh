@@ -1,18 +1,13 @@
 #!/bin/bash
 
 # ============================================
-# VPS Deployment Script
-# Git-based Docker Build & Deploy
+# 简化版 VPS 部署脚本
+# 适用于已经 git clone 的情况
 # ============================================
 
 set -e  # Exit on error
 
 echo "🚀 Starting deployment..."
-
-# Configuration
-PROJECT_DIR="/opt/english-training"
-REPO_URL="https://github.com/jantian3n/english-training.git"
-BRANCH="main"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -33,50 +28,69 @@ print_error() {
     echo -e "${RED}✗ $1${NC}"
 }
 
-# Check if git is installed
-if ! command -v git &> /dev/null; then
-    print_error "Git is not installed. Please install git first."
-    exit 1
-fi
-
 # Check if docker is installed
 if ! command -v docker &> /dev/null; then
-    print_error "Docker is not installed. Please install docker first."
+    print_error "Docker is not installed. Please run: sudo ./init-vps.sh"
     exit 1
 fi
 
-# Check if docker-compose is installed
-if ! command -v docker-compose &> /dev/null; then
-    print_error "Docker Compose is not installed. Please install docker-compose first."
-    exit 1
-fi
-
-# Step 1: Navigate to project directory or clone
-if [ -d "$PROJECT_DIR" ]; then
-    print_success "Project directory exists"
-    cd "$PROJECT_DIR"
-
-    # Pull latest changes
-    echo "📥 Pulling latest code from Git..."
-    git fetch origin
-    git reset --hard origin/$BRANCH
-    print_success "Code updated to latest version"
+# Check if docker compose is available (try both versions)
+DOCKER_COMPOSE_CMD=""
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+    print_success "Found docker-compose (standalone)"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+    print_success "Found docker compose (plugin)"
 else
-    print_warning "Project directory not found. Cloning repository..."
-    mkdir -p "$PROJECT_DIR"
-    git clone -b "$BRANCH" "$REPO_URL" "$PROJECT_DIR"
-    cd "$PROJECT_DIR"
-    print_success "Repository cloned"
+    print_error "Docker Compose is not installed."
+    echo ""
+    echo "Please install Docker Compose:"
+    echo "  sudo apt-get update"
+    echo "  sudo apt-get install -y docker-compose-plugin"
+    echo ""
+    echo "Or run the installation script:"
+    echo "  sudo ./install-docker-compose.sh"
+    exit 1
 fi
 
-# Step 2: Ensure .env file exists
+# Step 1: Check if we're in the project directory
+if [ ! -f "docker-compose.yml" ]; then
+    print_error "docker-compose.yml not found!"
+    echo "Please run this script from the project directory:"
+    echo "  cd ~/english-training"
+    echo "  ./deploy.sh"
+    exit 1
+fi
+
+print_success "In project directory"
+
+# Step 2: Pull latest changes (optional, only if git repo exists)
+if [ -d ".git" ]; then
+    echo "📥 Pulling latest code from Git..."
+    git pull origin main || print_warning "Failed to pull, continuing with current code..."
+    print_success "Code updated"
+else
+    print_warning "Not a git repository, using current code"
+fi
+
+# Step 3: Ensure .env file exists
 if [ ! -f ".env" ]; then
     print_warning ".env file not found!"
     if [ -f ".env.production" ]; then
         cp .env.production .env
-        print_warning "Copied .env.production to .env - PLEASE UPDATE VALUES!"
-        echo "Edit .env and re-run this script:"
+        print_warning "Copied .env.production to .env"
+        echo ""
+        echo "⚠️  IMPORTANT: Edit .env file before deploying:"
+        echo "  1. Set DEEPSEEK_API_KEY"
+        echo "  2. Set NEXTAUTH_SECRET (run: openssl rand -base64 32)"
+        echo "  3. Set NEXTAUTH_URL to your domain"
+        echo "  4. Set ADMIN_PASSWORD"
+        echo ""
+        echo "Edit now:"
         echo "  nano .env"
+        echo ""
+        echo "Then run deploy.sh again"
         exit 1
     else
         print_error "No .env or .env.production file found. Please create one."
@@ -84,57 +98,80 @@ if [ ! -f ".env" ]; then
     fi
 fi
 
-# Step 3: Create data directory for SQLite persistence
-echo "📁 Creating data directory for database persistence..."
+print_success ".env file exists"
+
+# Step 4: Create data directory for SQLite persistence
+echo "📁 Creating data directories..."
 mkdir -p ./data
 mkdir -p ./logs
-chmod 755 ./data ./logs
+mkdir -p ./backups
+chmod 755 ./data ./logs ./backups
 print_success "Data directories created"
 
-# Step 4: Stop existing containers
+# Step 5: Stop existing containers
 echo "🛑 Stopping existing containers..."
-docker-compose down || true
+$DOCKER_COMPOSE_CMD down || true
 print_success "Containers stopped"
 
-# Step 5: Build new images
+# Step 6: Build new images
 echo "🔨 Building Docker images..."
-docker-compose build --no-cache
+$DOCKER_COMPOSE_CMD build --no-cache
 print_success "Images built successfully"
 
-# Step 6: Start containers
+# Step 7: Start containers
 echo "🚢 Starting containers..."
-docker-compose up -d
+$DOCKER_COMPOSE_CMD up -d
 print_success "Containers started"
 
-# Step 7: Wait for health check
+# Step 8: Wait for health check
 echo "⏳ Waiting for application to be healthy..."
-sleep 10
+sleep 15
 
 # Check if container is running
-if docker-compose ps | grep -q "Up"; then
+if $DOCKER_COMPOSE_CMD ps | grep -q "Up"; then
     print_success "Application is running!"
 else
-    print_error "Application failed to start. Check logs with: docker-compose logs"
+    print_error "Application failed to start. Check logs with:"
+    echo "  $DOCKER_COMPOSE_CMD logs"
     exit 1
 fi
 
-# Step 8: Show status
+# Step 9: Show status
 echo ""
 echo "======================================"
 echo "✅ Deployment completed successfully!"
 echo "======================================"
 echo ""
 echo "📊 Container Status:"
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 echo ""
-echo "🔗 Application URL: http://$(hostname -I | awk '{print $1}'):3000"
+
+# Get IP address
+if command -v hostname &> /dev/null; then
+    IP=$(hostname -I | awk '{print $1}')
+    echo "🔗 Application URLs:"
+    echo "   http://$IP:3000"
+    echo "   http://localhost:3000 (if on local machine)"
+else
+    echo "🔗 Application URL: http://your-vps-ip:3000"
+fi
+
 echo ""
 echo "📝 Useful Commands:"
-echo "  View logs:        docker-compose logs -f"
-echo "  Stop app:         docker-compose down"
-echo "  Restart app:      docker-compose restart"
-echo "  Database backup:  cp ./data/dev.db ./data/dev.db.backup"
+echo "  View logs:        $DOCKER_COMPOSE_CMD logs -f"
+echo "  Stop app:         $DOCKER_COMPOSE_CMD down"
+echo "  Restart app:      $DOCKER_COMPOSE_CMD restart"
+echo "  Backup database:  ./backup.sh"
+echo "  Health check:     ./health-check.sh"
 echo ""
-echo "💾 Database Location: $PROJECT_DIR/data/dev.db"
-echo "📁 Logs Location: $PROJECT_DIR/logs"
+echo "💾 Database Location: $(pwd)/data/dev.db"
+echo "📁 Logs Location: $(pwd)/logs"
+echo ""
+
+# Show default credentials reminder
+echo "🔑 Default Login Credentials:"
+echo "   Admin: admin@example.com / admin123"
+echo "   User:  user@example.com / user123"
+echo ""
+echo "⚠️  Remember to change the admin password in production!"
 echo ""

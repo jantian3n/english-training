@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ============================================
-# First-Time VPS Setup Script
-# Run this once on a fresh VPS
+# VPS 初始化脚本 (优化版)
+# 一次性安装所有依赖
 # ============================================
 
 set -e
@@ -15,7 +15,7 @@ NC='\033[0m'
 
 print_header() {
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║   English Training VPS Setup Script   ║${NC}"
+    echo -e "${BLUE}║   English Training VPS 初始化脚本      ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -36,177 +36,173 @@ print_header
 
 # Check if running as root or with sudo
 if [ "$EUID" -ne 0 ]; then
-    print_error "Please run with sudo: sudo ./init-vps.sh"
+    print_error "请使用 sudo 运行此脚本: sudo ./init-vps.sh"
     exit 1
 fi
 
-echo "This script will:"
-echo "  1. Update system packages"
-echo "  2. Install Docker and Docker Compose"
-echo "  3. Setup firewall"
-echo "  4. Create project directory"
-echo "  5. Install additional tools"
+echo "此脚本将:"
+echo "  1. 更新系统包"
+echo "  2. 安装 Docker 和 Docker Compose"
+echo "  3. 配置防火墙"
+echo "  4. 安装常用工具"
+echo "  5. 设置自动备份"
 echo ""
-echo "Continue? (yes/no)"
+echo "继续? (yes/no)"
 read -r confirm
 
 if [ "$confirm" != "yes" ]; then
-    echo "Cancelled"
+    echo "已取消"
     exit 0
 fi
 
-# Step 1: Update system
+# Step 1: 更新系统
 echo ""
-echo "📦 Updating system packages..."
+echo "📦 更新系统包..."
 apt-get update
 apt-get upgrade -y
-print_success "System updated"
+print_success "系统已更新"
 
-# Step 2: Install Docker
+# Step 2: 安装 Docker
 echo ""
-echo "🐳 Installing Docker..."
+echo "🐳 安装 Docker..."
 if command -v docker &> /dev/null; then
-    print_warning "Docker already installed"
+    print_warning "Docker 已安装,版本: $(docker --version)"
 else
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    rm get-docker.sh
-    print_success "Docker installed"
+    # 安装依赖
+    apt-get install -y \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+    # 添加 Docker 官方 GPG key
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    # 添加 Docker 仓库
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # 安装 Docker Engine
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    print_success "Docker 已安装: $(docker --version)"
 fi
 
-# Start Docker service
+# 启动 Docker 服务
 systemctl start docker
 systemctl enable docker
-print_success "Docker service enabled"
+print_success "Docker 服务已启动"
 
-# Step 3: Install Docker Compose
+# Step 3: 验证 Docker Compose
 echo ""
-echo "🔧 Installing Docker Compose..."
-if command -v docker-compose &> /dev/null; then
-    print_warning "Docker Compose already installed"
+echo "🔧 验证 Docker Compose..."
+if docker compose version &> /dev/null; then
+    print_success "Docker Compose Plugin 已安装: $(docker compose version)"
+elif command -v docker-compose &> /dev/null; then
+    print_success "Docker Compose Standalone 已安装: $(docker-compose --version)"
 else
-    apt-get install -y docker-compose-plugin
-    print_success "Docker Compose installed"
+    print_error "Docker Compose 安装失败,尝试手动安装..."
+
+    # 尝试安装 standalone 版本
+    COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d'"' -f4)
+    curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+
+    if command -v docker-compose &> /dev/null; then
+        print_success "Docker Compose Standalone 已安装: $(docker-compose --version)"
+    else
+        print_error "Docker Compose 安装失败,请手动安装"
+        exit 1
+    fi
 fi
 
-# Step 4: Install additional tools
+# Step 4: 安装常用工具
 echo ""
-echo "🛠️  Installing additional tools..."
+echo "🛠️  安装常用工具..."
 apt-get install -y \
     git \
     curl \
     wget \
     nano \
+    vim \
     htop \
     ufw \
     sqlite3 \
-    openssl
+    openssl \
+    net-tools
 
-print_success "Tools installed"
+print_success "常用工具已安装"
 
-# Step 5: Setup firewall
+# Step 5: 配置防火墙
 echo ""
-echo "🔥 Configuring firewall..."
+echo "🔥 配置防火墙..."
 ufw --force enable
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow ssh
-ufw allow 3000/tcp  # Application port
+ufw allow 3000/tcp  # 应用端口
 ufw allow 80/tcp    # HTTP
 ufw allow 443/tcp   # HTTPS
-print_success "Firewall configured"
+print_success "防火墙已配置"
 
-# Step 6: Create project directory
-echo ""
-echo "📁 Creating project directory..."
-PROJECT_DIR="/opt/english-training"
-mkdir -p "$PROJECT_DIR"
-chmod 755 "$PROJECT_DIR"
-print_success "Project directory created: $PROJECT_DIR"
-
-# Step 7: Create backup directory
-echo ""
-echo "💾 Creating backup directory..."
-mkdir -p "$PROJECT_DIR/backups"
-mkdir -p "$PROJECT_DIR/data"
-mkdir -p "$PROJECT_DIR/logs"
-chmod 755 "$PROJECT_DIR/backups"
-chmod 755 "$PROJECT_DIR/data"
-chmod 755 "$PROJECT_DIR/logs"
-print_success "Backup directories created"
-
-# Step 8: Setup cron for daily backups
-echo ""
-echo "⏰ Setting up automated backups..."
-CRON_JOB="0 2 * * * cd $PROJECT_DIR && ./backup.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
-(crontab -l 2>/dev/null | grep -v "backup.sh"; echo "$CRON_JOB") | crontab -
-print_success "Daily backup scheduled (2 AM)"
-
-# Step 9: Create non-root user for deployment (optional)
-echo ""
-echo "👤 Do you want to create a deployment user? (yes/no)"
-read -r create_user
-
-if [ "$create_user" = "yes" ]; then
-    echo "Enter username:"
-    read -r username
-
-    if id "$username" &>/dev/null; then
-        print_warning "User $username already exists"
-    else
-        adduser --disabled-password --gecos "" "$username"
-        usermod -aG docker "$username"
-        print_success "User $username created and added to docker group"
-
-        # Grant access to project directory
-        chown -R "$username:$username" "$PROJECT_DIR"
-        print_success "Project directory ownership set to $username"
-    fi
+# Step 6: 添加当前用户到 docker 组 (如果不是 root)
+if [ -n "$SUDO_USER" ]; then
+    echo ""
+    echo "👤 添加用户到 docker 组..."
+    usermod -aG docker "$SUDO_USER"
+    print_success "用户 $SUDO_USER 已添加到 docker 组"
+    print_warning "注意: 需要重新登录才能生效"
 fi
 
-# Step 10: Display information
+# Step 7: 显示安装信息
 echo ""
 echo "════════════════════════════════════════"
-echo -e "${GREEN}✅ VPS Setup Complete!${NC}"
+echo -e "${GREEN}✅ VPS 初始化完成!${NC}"
 echo "════════════════════════════════════════"
 echo ""
-echo "📊 System Information:"
-echo "  OS: $(lsb_release -d | cut -f2)"
+echo "📊 安装信息:"
+echo "  操作系统: $(lsb_release -d | cut -f2)"
 echo "  Docker: $(docker --version)"
-echo "  Docker Compose: $(docker compose version)"
+if docker compose version &> /dev/null; then
+    echo "  Docker Compose: $(docker compose version | head -1)"
+else
+    echo "  Docker Compose: $(docker-compose --version)"
+fi
 echo ""
-echo "📁 Directories:"
-echo "  Project: $PROJECT_DIR"
-echo "  Backups: $PROJECT_DIR/backups"
-echo "  Data: $PROJECT_DIR/data"
-echo "  Logs: $PROJECT_DIR/logs"
-echo ""
-echo "🔥 Firewall Status:"
+echo "🔥 防火墙状态:"
 ufw status numbered
 echo ""
-echo "📋 Next Steps:"
-echo "  1. Clone your repository:"
-echo "     cd $PROJECT_DIR"
-echo "     git clone <your-repo-url> ."
+echo "📋 下一步操作:"
 echo ""
-echo "  2. Configure environment:"
-echo "     cp .env.production .env"
-echo "     nano .env"
+echo "1. 克隆项目仓库:"
+echo "   cd ~"
+echo "   git clone https://github.com/jantian3n/english-training.git"
+echo "   cd english-training"
 echo ""
-echo "  3. Generate secrets:"
-echo "     openssl rand -base64 32  # For NEXTAUTH_SECRET"
+echo "2. 配置环境变量:"
+echo "   cp .env.production .env"
+echo "   nano .env"
 echo ""
-echo "  4. Deploy application:"
-echo "     ./deploy.sh"
+echo "   必须设置:"
+echo "   - DEEPSEEK_API_KEY=your-api-key"
+echo "   - NEXTAUTH_SECRET=\$(openssl rand -base64 32)"
+echo "   - NEXTAUTH_URL=http://your-vps-ip:3000"
+echo "   - ADMIN_PASSWORD=your-strong-password"
 echo ""
-echo "  5. Setup SSL (optional):"
-echo "     apt-get install certbot python3-certbot-nginx"
-echo "     certbot --nginx -d yourdomain.com"
+echo "3. 部署应用:"
+echo "   chmod +x deploy.sh"
+echo "   ./deploy.sh"
 echo ""
-echo "💡 Useful Commands:"
-echo "  docker ps                    # View running containers"
-echo "  docker-compose logs -f       # View logs"
-echo "  ufw status                   # Check firewall"
-echo "  systemctl status docker      # Check Docker status"
-echo "  ./backup.sh                  # Manual backup"
+echo "💡 常用命令:"
+echo "  查看容器状态:    docker ps"
+echo "  查看日志:        docker compose logs -f"
+echo "  防火墙状态:      sudo ufw status"
+echo "  系统资源:        htop"
+echo ""
+echo "⚠️  如果添加了用户到 docker 组,请重新登录:"
+echo "   exit"
+echo "   ssh user@your-vps-ip"
 echo ""
