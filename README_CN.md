@@ -304,8 +304,10 @@ npx prisma db seed              # 填充示例数据
 ### VPS 首次部署
 
 ```bash
-# 1. 初始化 VPS 环境
-sudo ./init-vps.sh
+# 1. 安装 Docker (使用官方脚本)
+curl -fsSL https://get.docker.com | sudo sh
+sudo systemctl start docker
+sudo systemctl enable docker
 
 # 2. 克隆仓库
 git clone https://github.com/jantian3n/english-training.git /opt/english-training

@@ -62,22 +62,34 @@ npm run dev
 
 ### 1️⃣ 首次 VPS 设置
 
+**方法 A: 使用一键脚本 (推荐)**
+
 ```bash
-# 在 VPS 上运行初始化脚本
-sudo ./init-vps.sh
+# 下载并运行设置脚本
+curl -fsSL https://raw.githubusercontent.com/jantian3n/english-training/main/setup-vps.sh -o setup-vps.sh
+sudo bash setup-vps.sh
 ```
 
-这会安装:
-- Docker & Docker Compose
-- Git 和其他工具
-- 配置防火墙
-- 设置自动备份
+**方法 B: 手动安装 Docker**
+
+```bash
+# 使用 Docker 官方安装脚本
+curl -fsSL https://get.docker.com | sudo sh
+
+# 启动 Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 安装其他工具
+sudo apt-get install -y git curl wget nano sqlite3 openssl
+```
 
 ### 2️⃣ 克隆项目
 
 ```bash
-cd /opt/english-training
-git clone <你的仓库地址> .
+cd ~
+git clone https://github.com/jantian3n/english-training.git
+cd english-training
 ```
 
 ### 3️⃣ 配置生产环境
