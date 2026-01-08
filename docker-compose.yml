@@ -3,8 +3,6 @@
 # SQLite Database Persistence via Volume Mounting
 # ============================================
 
-version: '3.8'
-
 services:
   web:
     build:
