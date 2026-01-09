@@ -351,14 +351,23 @@ export async function getQuizOptions(wordId: string) {
 
     // Store them for future use
     if (distractors.length > 0) {
-      await prisma.quizOption.createMany({
-        data: distractors.map((distractor) => ({
-          wordId,
-          optionText: distractor,
-          isCorrect: false,
-        })),
-        skipDuplicates: true,
+      // Check existing options to avoid duplicates (SQLite doesn't support skipDuplicates)
+      const existingOptions = await prisma.quizOption.findMany({
+        where: { wordId },
+        select: { optionText: true },
       })
+      const existingTexts = new Set(existingOptions.map((o) => o.optionText))
+      const newDistractors = distractors.filter((d) => !existingTexts.has(d))
+
+      if (newDistractors.length > 0) {
+        await prisma.quizOption.createMany({
+          data: newDistractors.map((distractor) => ({
+            wordId,
+            optionText: distractor,
+            isCorrect: false,
+          })),
+        })
+      }
     }
 
     return distractors
