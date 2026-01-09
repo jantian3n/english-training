@@ -3,8 +3,6 @@
 # SQLite Database Persistence via Volume Mounting
 # ============================================
 
-version: '3.8'
-
 services:
   web:
     build:
@@ -14,7 +12,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "3000:3000"
+      - "3366:3000"
 
     environment:
       # Database URL - CRITICAL: Points to persistent volume
