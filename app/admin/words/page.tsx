@@ -35,8 +35,20 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Folder as FolderIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material'
-import { addWord, getWords, updateWord, deleteWord, getWordSets } from '@/app/actions'
+import {
+  addWord,
+  getWords,
+  updateWord,
+  deleteWord,
+  getWordSets,
+  getWordQuizOptions,
+  updateQuizOption,
+  deleteQuizOption,
+  addQuizOption,
+  regenerateQuizOptions,
+} from '@/app/actions'
 
 interface WordSet {
   id: string
@@ -63,6 +75,14 @@ interface Word {
   }
 }
 
+interface QuizOption {
+  id: string
+  wordId: string
+  optionText: string
+  isCorrect: boolean
+  createdAt: Date
+}
+
 export default function WordsPage() {
   const [words, setWords] = useState<Word[]>([])
   const [wordSets, setWordSets] = useState<WordSet[]>([])
@@ -74,6 +94,12 @@ export default function WordsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [filterWordSetId, setFilterWordSetId] = useState<string>('')
+
+  // 干扰项相关状态
+  const [quizOptions, setQuizOptions] = useState<QuizOption[]>([])
+  const [loadingOptions, setLoadingOptions] = useState(false)
+  const [regeneratingOptions, setRegeneratingOptions] = useState(false)
+  const [newOptionText, setNewOptionText] = useState('')
 
   const [addFormData, setAddFormData] = useState({
     word: '',
@@ -157,7 +183,7 @@ export default function WordsPage() {
     setSubmitting(false)
   }
 
-  const handleEditOpen = (word: Word) => {
+  const handleEditOpen = async (word: Word) => {
     setEditFormData({
       id: word.id,
       word: word.word,
@@ -173,6 +199,19 @@ export default function WordsPage() {
     setOpenEdit(true)
     setError('')
     setSuccess('')
+    setNewOptionText('')
+
+    // 加载干扰项
+    setLoadingOptions(true)
+    try {
+      const options = await getWordQuizOptions(word.id)
+      setQuizOptions(options as QuizOption[])
+    } catch (error) {
+      console.error('Error loading quiz options:', error)
+      setQuizOptions([])
+    } finally {
+      setLoadingOptions(false)
+    }
   }
 
   const handleEditSubmit = async () => {
@@ -222,6 +261,52 @@ export default function WordsPage() {
       } finally {
         setDeletingId(null)
       }
+    }
+  }
+
+  // 干扰项处理函数
+  const handleUpdateOption = async (optionId: string, newText: string) => {
+    const result = await updateQuizOption(optionId, newText)
+    if (result.success) {
+      setQuizOptions(quizOptions.map(opt =>
+        opt.id === optionId ? { ...opt, optionText: newText } : opt
+      ))
+    }
+  }
+
+  const handleDeleteOption = async (optionId: string) => {
+    const result = await deleteQuizOption(optionId)
+    if (result.success) {
+      setQuizOptions(quizOptions.filter(opt => opt.id !== optionId))
+    }
+  }
+
+  const handleAddOption = async () => {
+    if (!editFormData || !newOptionText.trim()) return
+
+    const result = await addQuizOption(editFormData.id, newOptionText.trim())
+    if (result.success && result.option) {
+      setQuizOptions([...quizOptions, result.option as QuizOption])
+      setNewOptionText('')
+    }
+  }
+
+  const handleRegenerateOptions = async () => {
+    if (!editFormData) return
+
+    setRegeneratingOptions(true)
+    try {
+      const result = await regenerateQuizOptions(editFormData.id)
+      if (result.success && result.options) {
+        setQuizOptions(result.options as QuizOption[])
+        setSuccess('干扰项已重新生成！')
+      } else {
+        setError(result.error || '重新生成失败')
+      }
+    } catch (error) {
+      setError('重新生成失败')
+    } finally {
+      setRegeneratingOptions(false)
     }
   }
 
@@ -582,6 +667,95 @@ export default function WordsPage() {
                   }
                   label="启用状态"
                 />
+              </Box>
+
+              {/* 干扰项编辑区 */}
+              <Box sx={{ gridColumn: 'span 2', mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    测验选项（干扰项）
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<RefreshIcon />}
+                    onClick={handleRegenerateOptions}
+                    disabled={regeneratingOptions || submitting}
+                  >
+                    {regeneratingOptions ? 'AI生成中...' : 'AI重新生成'}
+                  </Button>
+                </Box>
+
+                {loadingOptions ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : (
+                  <>
+                    {quizOptions.map((option, index) => (
+                      <Box
+                        key={option.id}
+                        sx={{
+                          display: 'flex',
+                          gap: 1,
+                          mb: 1,
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ minWidth: 60, color: 'text.secondary' }}
+                        >
+                          选项 {index + 1}:
+                        </Typography>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          value={option.optionText}
+                          onChange={(e) => {
+                            setQuizOptions(quizOptions.map(opt =>
+                              opt.id === option.id ? { ...opt, optionText: e.target.value } : opt
+                            ))
+                          }}
+                          onBlur={(e) => handleUpdateOption(option.id, e.target.value)}
+                          disabled={submitting || regeneratingOptions}
+                        />
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteOption(option.id)}
+                          disabled={submitting || regeneratingOptions || quizOptions.length <= 1}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+
+                    {quizOptions.length < 3 && (
+                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          placeholder="输入新的干扰项..."
+                          value={newOptionText}
+                          onChange={(e) => setNewOptionText(e.target.value)}
+                          disabled={submitting || regeneratingOptions}
+                        />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={handleAddOption}
+                          disabled={!newOptionText.trim() || submitting || regeneratingOptions}
+                        >
+                          添加
+                        </Button>
+                      </Box>
+                    )}
+
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      学习时将显示：正确答案 + 以上{quizOptions.length}个干扰项（共{quizOptions.length + 1}个选项）
+                    </Typography>
+                  </>
+                )}
               </Box>
             </Box>
           )}

@@ -597,6 +597,210 @@ export async function getUserStats() {
 
 // ==================== Leaderboard ====================
 
+// ==================== Practice Mode Functions ====================
+
+// 获取单词集的所有单词（用于练习模式，忽略复习时间限制）
+export async function getAllWordsForPractice(wordSetId?: string | null) {
+  await requireAuth()
+
+  const wordFilter = wordSetId ? { wordSetId } : {}
+
+  const words = await prisma.word.findMany({
+    where: {
+      isActive: true,
+      ...wordFilter,
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return words
+}
+
+// 重置单词集的学习进度
+export async function resetWordSetProgress(wordSetId: string) {
+  const session = await requireAuth()
+  const userId = session.user.id
+
+  // 获取该单词集的所有单词ID
+  const words = await prisma.word.findMany({
+    where: { wordSetId },
+    select: { id: true },
+  })
+
+  const wordIds = words.map((w) => w.id)
+
+  // 更新这些单词的学习记录，将 nextReviewDate 设为现在
+  const result = await prisma.learningRecord.updateMany({
+    where: {
+      userId,
+      wordId: { in: wordIds },
+    },
+    data: {
+      nextReviewDate: new Date(),
+      interval: 0,
+      repetitions: 0,
+      easeFactor: 2.5,
+    },
+  })
+
+  revalidatePath('/learn')
+  return { success: true, updatedCount: result.count }
+}
+
+// 练习模式提交（只记录统计，不影响SM-2）
+export async function submitPracticeReview(
+  wordId: string,
+  isCorrectDefinition: boolean,
+  isCorrectSpelling: boolean,
+  timeTaken: number
+) {
+  const session = await requireAuth()
+  const userId = session.user.id
+
+  // 计算质量评分（仅用于统计）
+  const quality = calculateQuality(isCorrectDefinition, isCorrectSpelling, timeTaken)
+
+  // 获取或创建学习记录
+  let record = await prisma.learningRecord.findUnique({
+    where: {
+      userId_wordId: { userId, wordId },
+    },
+  })
+
+  if (!record) {
+    // 创建新记录（但不设置复习时间，保持为当前时间）
+    record = await prisma.learningRecord.create({
+      data: {
+        userId,
+        wordId,
+        easeFactor: 2.5,
+        interval: 0,
+        repetitions: 0,
+        nextReviewDate: new Date(),
+      },
+    })
+  }
+
+  // 只更新统计数据，不影响 SM-2 参数
+  await prisma.learningRecord.update({
+    where: { id: record.id },
+    data: {
+      totalReviews: { increment: 1 },
+      correctCount: isCorrectDefinition && isCorrectSpelling ? { increment: 1 } : undefined,
+      incorrectCount: !isCorrectDefinition || !isCorrectSpelling ? { increment: 1 } : undefined,
+      lastReviewedAt: new Date(),
+    },
+  })
+
+  return { success: true, quality, isPracticeMode: true }
+}
+
+// ==================== Quiz Option Management ====================
+
+// 获取单词的干扰项列表
+export async function getWordQuizOptions(wordId: string) {
+  await requireAdmin()
+
+  const options = await prisma.quizOption.findMany({
+    where: { wordId },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  return options
+}
+
+// 更新干扰项
+export async function updateQuizOption(optionId: string, optionText: string) {
+  await requireAdmin()
+
+  try {
+    const option = await prisma.quizOption.update({
+      where: { id: optionId },
+      data: { optionText },
+    })
+    return { success: true, option }
+  } catch (error) {
+    console.error('Error updating quiz option:', error)
+    return { success: false, error: '更新失败' }
+  }
+}
+
+// 删除干扰项
+export async function deleteQuizOption(optionId: string) {
+  await requireAdmin()
+
+  try {
+    await prisma.quizOption.delete({ where: { id: optionId } })
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting quiz option:', error)
+    return { success: false, error: '删除失败' }
+  }
+}
+
+// 添加干扰项
+export async function addQuizOption(wordId: string, optionText: string) {
+  await requireAdmin()
+
+  try {
+    const option = await prisma.quizOption.create({
+      data: {
+        wordId,
+        optionText,
+        isCorrect: false,
+      },
+    })
+    return { success: true, option }
+  } catch (error) {
+    console.error('Error adding quiz option:', error)
+    return { success: false, error: '添加失败' }
+  }
+}
+
+// 重新生成干扰项
+export async function regenerateQuizOptions(wordId: string) {
+  await requireAdmin()
+
+  try {
+    // 获取单词信息
+    const word = await prisma.word.findUnique({
+      where: { id: wordId },
+    })
+
+    if (!word) {
+      return { success: false, error: '单词不存在' }
+    }
+
+    // 删除现有干扰项
+    await prisma.quizOption.deleteMany({ where: { wordId } })
+
+    // 生成新的干扰项
+    const distractors = await generateQuizOptions(word.word, word.definition, 3)
+
+    // 存储新干扰项
+    await prisma.quizOption.createMany({
+      data: distractors.map((distractor) => ({
+        wordId,
+        optionText: distractor,
+        isCorrect: false,
+      })),
+    })
+
+    // 返回新生成的干扰项
+    const newOptions = await prisma.quizOption.findMany({
+      where: { wordId },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    return { success: true, options: newOptions }
+  } catch (error) {
+    console.error('Error regenerating quiz options:', error)
+    return { success: false, error: '重新生成失败' }
+  }
+}
+
+// ==================== Leaderboard ====================
+
 export async function getLeaderboard() {
   await requireAuth()
 

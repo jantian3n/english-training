@@ -12,10 +12,28 @@ import {
   MenuItem,
   Paper,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from '@mui/material'
-import { Folder as FolderIcon, PlayArrow as PlayIcon } from '@mui/icons-material'
+import {
+  Folder as FolderIcon,
+  PlayArrow as PlayIcon,
+  Refresh as RefreshIcon,
+  FitnessCenter as PracticeIcon,
+} from '@mui/icons-material'
 import LearningCard from '@/components/LearningCard'
-import { getDueWordsForUser, submitWordReview, getQuizOptions, getActiveWordSets } from '@/app/actions'
+import {
+  getDueWordsForUser,
+  submitWordReview,
+  getQuizOptions,
+  getActiveWordSets,
+  getAllWordsForPractice,
+  resetWordSetProgress,
+  submitPracticeReview,
+} from '@/app/actions'
 import { Word } from '@prisma/client'
 
 interface WordSet {
@@ -33,6 +51,9 @@ export default function LearnPage() {
   const [wordSets, setWordSets] = useState<WordSet[]>([])
   const [selectedWordSetId, setSelectedWordSetId] = useState<string>('')
   const [started, setStarted] = useState(false)
+  const [isPracticeMode, setIsPracticeMode] = useState(false)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     loadWordSets()
@@ -76,7 +97,42 @@ export default function LearnPage() {
 
   const handleStart = async () => {
     setStarted(true)
+    setIsPracticeMode(false)
     await loadWords()
+  }
+
+  // 开始练习模式（加载所有单词）
+  const handleStartPractice = async () => {
+    setLoading(true)
+    setIsPracticeMode(true)
+    try {
+      const allWords = await getAllWordsForPractice(selectedWordSetId || undefined)
+      setWords(allWords)
+      if (allWords.length > 0) {
+        await loadOptions(allWords[0].id)
+      }
+    } catch (error) {
+      console.error('Error loading practice words:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 重置学习进度
+  const handleResetProgress = async () => {
+    if (!selectedWordSetId) return
+
+    setResetting(true)
+    try {
+      await resetWordSetProgress(selectedWordSetId)
+      setResetDialogOpen(false)
+      // 重置后重新加载单词
+      await loadWords()
+    } catch (error) {
+      console.error('Error resetting progress:', error)
+    } finally {
+      setResetting(false)
+    }
   }
 
   const handleComplete = async (
@@ -86,7 +142,12 @@ export default function LearnPage() {
   ) => {
     const currentWord = words[currentIndex]
 
-    await submitWordReview(currentWord.id, isCorrectDefinition, isCorrectSpelling, timeTaken)
+    // 根据模式选择不同的提交函数
+    if (isPracticeMode) {
+      await submitPracticeReview(currentWord.id, isCorrectDefinition, isCorrectSpelling, timeTaken)
+    } else {
+      await submitWordReview(currentWord.id, isCorrectDefinition, isCorrectSpelling, timeTaken)
+    }
 
     // Move to next word
     const nextIndex = currentIndex + 1
@@ -94,14 +155,23 @@ export default function LearnPage() {
       setCurrentIndex(nextIndex)
       await loadOptions(words[nextIndex].id)
     } else {
-      // Reload words when finished
-      await loadWords()
-      setCurrentIndex(0)
+      // 练习模式结束后返回选择界面
+      if (isPracticeMode) {
+        setStarted(false)
+        setIsPracticeMode(false)
+        setWords([])
+        setCurrentIndex(0)
+      } else {
+        // 正常模式重新加载
+        await loadWords()
+        setCurrentIndex(0)
+      }
     }
   }
 
   const handleBackToSelect = () => {
     setStarted(false)
+    setIsPracticeMode(false)
     setWords([])
     setCurrentIndex(0)
   }
@@ -212,10 +282,61 @@ export default function LearnPage() {
           <Typography variant="body1" color="text.secondary" mb={4}>
             {selectedWordSetId ? '可以尝试其他单词集，或者等待新单词到期。' : '明天再来吧，或者选择其他单词集。'}
           </Typography>
+
+          {/* 练习和重置按钮 */}
+          {selectedWordSetId && (
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<PracticeIcon />}
+                onClick={handleStartPractice}
+              >
+                练习全部单词
+              </Button>
+              <Button
+                variant="outlined"
+                color="warning"
+                startIcon={<RefreshIcon />}
+                onClick={() => setResetDialogOpen(true)}
+              >
+                重置学习进度
+              </Button>
+            </Box>
+          )}
+
           <Button variant="outlined" onClick={handleBackToSelect}>
             返回选择
           </Button>
         </Box>
+
+        {/* 重置确认弹窗 */}
+        <Dialog open={resetDialogOpen} onClose={() => !resetting && setResetDialogOpen(false)}>
+          <DialogTitle>确认重置学习进度</DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              此操作将重置「{selectedWordSet?.name}」单词集的所有学习进度，包括：
+              <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                <li>复习间隔将重置为0</li>
+                <li>重复次数将重置为0</li>
+                <li>难易系数将重置为初始值</li>
+              </ul>
+              统计数据（练习次数、正确率）将保留。
+            </Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setResetDialogOpen(false)} disabled={resetting}>
+              取消
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={handleResetProgress}
+              disabled={resetting}
+            >
+              {resetting ? '重置中...' : '确认重置'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     )
   }
@@ -238,8 +359,13 @@ export default function LearnPage() {
         </Box>
 
         <Typography variant="h4" gutterBottom textAlign="center" fontWeight={600}>
-          每日复习
+          {isPracticeMode ? '练习模式' : '每日复习'}
         </Typography>
+        {isPracticeMode && (
+          <Alert severity="info" sx={{ mb: 2, maxWidth: 400, mx: 'auto' }}>
+            练习模式：只记录统计数据，不影响复习计划
+          </Alert>
+        )}
         <Typography variant="body1" color="text.secondary" textAlign="center" mb={2}>
           {currentIndex + 1} / {words.length}
         </Typography>
