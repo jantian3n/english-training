@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -14,13 +14,18 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import {
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   HourglassEmpty as PendingIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material'
-import { bulkAddWords } from '@/app/actions'
+import { bulkAddWords, getWordSets } from '@/app/actions'
 
 interface ImportResult {
   word: string
@@ -28,11 +33,33 @@ interface ImportResult {
   message?: string
 }
 
+interface WordSet {
+  id: string
+  name: string
+  color: string
+  _count: { words: number }
+}
+
 export default function ImportPage() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ImportResult[]>([])
   const [progress, setProgress] = useState(0)
+  const [wordSets, setWordSets] = useState<WordSet[]>([])
+  const [selectedWordSetId, setSelectedWordSetId] = useState<string>('')
+
+  useEffect(() => {
+    loadWordSets()
+  }, [])
+
+  const loadWordSets = async () => {
+    try {
+      const data = await getWordSets()
+      setWordSets(data as WordSet[])
+    } catch (error) {
+      console.error('Error loading word sets:', error)
+    }
+  }
 
   const parseInput = (text: string): Array<{ word: string; definition: string }> => {
     const lines = text.trim().split('\n').filter((line) => line.trim())
@@ -84,7 +111,7 @@ export default function ImportPage() {
         setProgress((prev) => Math.min(prev + 5, 90))
       }, 1000)
 
-      const result = await bulkAddWords(words)
+      const result = await bulkAddWords(words, selectedWordSetId || undefined)
 
       clearInterval(progressInterval)
       setProgress(100)
@@ -118,6 +145,7 @@ export default function ImportPage() {
 
   const successCount = results.filter((r) => r.status === 'success').length
   const errorCount = results.filter((r) => r.status === 'error').length
+  const selectedWordSet = wordSets.find(ws => ws.id === selectedWordSetId)
 
   return (
     <Box>
@@ -139,6 +167,33 @@ export default function ImportPage() {
       </Alert>
 
       <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
+          <FormControl fullWidth>
+            <InputLabel>导入到单词集</InputLabel>
+            <Select
+              value={selectedWordSetId}
+              label="导入到单词集"
+              onChange={(e) => setSelectedWordSetId(e.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="">不分类</MenuItem>
+              {wordSets.map((ws) => (
+                <MenuItem key={ws.id} value={ws.id}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <FolderIcon sx={{ color: ws.color, fontSize: 18 }} />
+                    {ws.name} ({ws._count.words} 个单词)
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {selectedWordSet && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              单词将导入到「{selectedWordSet.name}」单词集
+            </Typography>
+          )}
+        </Box>
+
         <TextField
           fullWidth
           multiline

@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Paper sx={{ mb: 3 }}>
         <Tabs value={false} variant="fullWidth">
           <Tab label="用户管理" component={Link} href="/admin/users" />
+          <Tab label="单词集" component={Link} href="/admin/wordsets" />
           <Tab label="单词管理" component={Link} href="/admin/words" />
           <Tab label="批量导入" component={Link} href="/admin/import" />
         </Tabs>

@@ -26,13 +26,24 @@ import {
   FormControlLabel,
   Tooltip,
   LinearProgress,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material'
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material'
-import { addWord, getWords, updateWord, deleteWord } from '@/app/actions'
+import { addWord, getWords, updateWord, deleteWord, getWordSets } from '@/app/actions'
+
+interface WordSet {
+  id: string
+  name: string
+  color: string
+  _count: { words: number }
+}
 
 interface Word {
   id: string
@@ -44,6 +55,8 @@ interface Word {
   exampleCn: string
   difficulty: number
   isActive: boolean
+  wordSetId: string | null
+  wordSet: WordSet | null
   createdAt: Date
   _count: {
     quizOptions: number
@@ -52,17 +65,21 @@ interface Word {
 
 export default function WordsPage() {
   const [words, setWords] = useState<Word[]>([])
+  const [wordSets, setWordSets] = useState<WordSet[]>([])
   const [loading, setLoading] = useState(true)
   const [openAdd, setOpenAdd] = useState(false)
   const [openEdit, setOpenEdit] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [filterWordSetId, setFilterWordSetId] = useState<string>('')
 
   const [addFormData, setAddFormData] = useState({
     word: '',
     definition: '',
     difficulty: 1,
+    wordSetId: '',
   })
 
   const [editFormData, setEditFormData] = useState<{
@@ -75,20 +92,38 @@ export default function WordsPage() {
     exampleCn: string
     difficulty: number
     isActive: boolean
+    wordSetId: string | null
   } | null>(null)
 
   useEffect(() => {
-    loadWords()
+    loadData()
   }, [])
+
+  useEffect(() => {
+    loadWords()
+  }, [filterWordSetId])
+
+  const loadData = async () => {
+    try {
+      const [wordsData, wordSetsData] = await Promise.all([
+        getWords(),
+        getWordSets(),
+      ])
+      setWords(wordsData as Word[])
+      setWordSets(wordSetsData as WordSet[])
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadWords = async () => {
     try {
-      const data = await getWords()
+      const data = await getWords(filterWordSetId || undefined)
       setWords(data as Word[])
     } catch (error) {
       console.error('Error loading words:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -101,12 +136,15 @@ export default function WordsPage() {
     form.append('word', addFormData.word)
     form.append('definition', addFormData.definition)
     form.append('difficulty', addFormData.difficulty.toString())
+    if (addFormData.wordSetId) {
+      form.append('wordSetId', addFormData.wordSetId)
+    }
 
     const result = await addWord(form)
 
     if (result.success) {
       setSuccess('单词添加成功，AI已自动生成内容！')
-      setAddFormData({ word: '', definition: '', difficulty: 1 })
+      setAddFormData({ word: '', definition: '', difficulty: 1, wordSetId: addFormData.wordSetId })
       loadWords()
       setTimeout(() => {
         setOpenAdd(false)
@@ -130,6 +168,7 @@ export default function WordsPage() {
       exampleCn: word.exampleCn,
       difficulty: word.difficulty,
       isActive: word.isActive,
+      wordSetId: word.wordSetId,
     })
     setOpenEdit(true)
     setError('')
@@ -151,6 +190,7 @@ export default function WordsPage() {
       exampleCn: editFormData.exampleCn,
       difficulty: editFormData.difficulty,
       isActive: editFormData.isActive,
+      wordSetId: editFormData.wordSetId,
     })
 
     if (result.success) {
@@ -168,12 +208,19 @@ export default function WordsPage() {
   }
 
   const handleDelete = async (wordId: string, wordText: string) => {
+    if (deletingId) return
+
     if (confirm(`确定要删除单词 "${wordText}" 吗？此操作不可撤销。`)) {
-      const result = await deleteWord(wordId)
-      if (result.success) {
-        loadWords()
-      } else {
-        alert(result.error || '删除失败')
+      setDeletingId(wordId)
+      try {
+        const result = await deleteWord(wordId)
+        if (result.success) {
+          loadWords()
+        } else {
+          alert(result.error || '删除失败')
+        }
+      } finally {
+        setDeletingId(null)
       }
     }
   }
@@ -208,19 +255,40 @@ export default function WordsPage() {
         </Button>
       </Box>
 
-      <Alert severity="info" sx={{ mb: 3 }}>
-        共 {words.length} 个单词。添加单词时，AI会自动生成例句、音标、中文释义和测验选项。
-      </Alert>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>筛选单词集</InputLabel>
+          <Select
+            value={filterWordSetId}
+            label="筛选单词集"
+            onChange={(e) => setFilterWordSetId(e.target.value)}
+          >
+            <MenuItem value="">全部单词</MenuItem>
+            <MenuItem value="none">未分类</MenuItem>
+            {wordSets.map((ws) => (
+              <MenuItem key={ws.id} value={ws.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FolderIcon sx={{ color: ws.color, fontSize: 18 }} />
+                  {ws.name} ({ws._count.words})
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Alert severity="info" sx={{ flex: 1 }}>
+          共 {words.length} 个单词。添加单词时，AI会自动生成例句、音标、中文释义和测验选项。
+        </Alert>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.50' }}>
               <TableCell>单词</TableCell>
+              <TableCell>单词集</TableCell>
               <TableCell>释义</TableCell>
               <TableCell>中文</TableCell>
               <TableCell align="center">难度</TableCell>
-              <TableCell align="center">选项数</TableCell>
               <TableCell align="center">状态</TableCell>
               <TableCell align="right">操作</TableCell>
             </TableRow>
@@ -243,7 +311,19 @@ export default function WordsPage() {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell sx={{ maxWidth: 200 }}>
+                  <TableCell>
+                    {word.wordSet ? (
+                      <Chip
+                        icon={<FolderIcon sx={{ color: `${word.wordSet.color} !important` }} />}
+                        label={word.wordSet.name}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">-</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ maxWidth: 180 }}>
                     <Tooltip title={word.definition}>
                       <Typography
                         variant="body2"
@@ -257,7 +337,7 @@ export default function WordsPage() {
                       </Typography>
                     </Tooltip>
                   </TableCell>
-                  <TableCell sx={{ maxWidth: 150 }}>
+                  <TableCell sx={{ maxWidth: 120 }}>
                     <Tooltip title={word.definitionCn}>
                       <Typography
                         variant="body2"
@@ -284,7 +364,6 @@ export default function WordsPage() {
                       }
                     />
                   </TableCell>
-                  <TableCell align="center">{word._count.quizOptions}</TableCell>
                   <TableCell align="center">
                     <Chip
                       label={word.isActive ? '启用' : '禁用'}
@@ -293,15 +372,20 @@ export default function WordsPage() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" onClick={() => handleEditOpen(word)}>
+                    <IconButton size="small" onClick={() => handleEditOpen(word)} disabled={!!deletingId}>
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       color="error"
                       onClick={() => handleDelete(word.id, word.word)}
+                      disabled={!!deletingId}
                     >
-                      <DeleteIcon fontSize="small" />
+                      {deletingId === word.id ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <DeleteIcon fontSize="small" />
+                      )}
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -315,16 +399,8 @@ export default function WordsPage() {
       <Dialog open={openAdd} onClose={() => !submitting && setOpenAdd(false)} maxWidth="sm" fullWidth>
         <DialogTitle>添加新单词</DialogTitle>
         <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {success}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
           <TextField
             fullWidth
@@ -344,6 +420,25 @@ export default function WordsPage() {
             rows={3}
             disabled={submitting}
           />
+          <TextField
+            fullWidth
+            select
+            label="单词集"
+            value={addFormData.wordSetId}
+            onChange={(e) => setAddFormData({ ...addFormData, wordSetId: e.target.value })}
+            margin="normal"
+            disabled={submitting}
+          >
+            <MenuItem value="">不分类</MenuItem>
+            {wordSets.map((ws) => (
+              <MenuItem key={ws.id} value={ws.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FolderIcon sx={{ color: ws.color, fontSize: 18 }} />
+                  {ws.name}
+                </Box>
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             fullWidth
             select
@@ -383,16 +478,8 @@ export default function WordsPage() {
       <Dialog open={openEdit} onClose={() => !submitting && setOpenEdit(false)} maxWidth="md" fullWidth>
         <DialogTitle>编辑单词</DialogTitle>
         <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {success}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
           {editFormData && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
@@ -448,6 +535,24 @@ export default function WordsPage() {
                 disabled={submitting}
                 sx={{ gridColumn: 'span 2' }}
               />
+              <TextField
+                fullWidth
+                select
+                label="单词集"
+                value={editFormData.wordSetId || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, wordSetId: e.target.value || null })}
+                disabled={submitting}
+              >
+                <MenuItem value="">不分类</MenuItem>
+                {wordSets.map((ws) => (
+                  <MenuItem key={ws.id} value={ws.id}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <FolderIcon sx={{ color: ws.color, fontSize: 18 }} />
+                      {ws.name}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 fullWidth
                 select

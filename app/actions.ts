@@ -8,6 +8,108 @@ import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
 import { Role } from '@prisma/client'
 
+// ==================== Word Set Management ====================
+
+export async function getWordSets() {
+  await requireAdmin()
+  return prisma.wordSet.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      _count: {
+        select: { words: true },
+      },
+    },
+  })
+}
+
+export async function getActiveWordSets() {
+  // 需要登录才能获取单词集列表
+  await requireAuth()
+
+  return prisma.wordSet.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' },
+    include: {
+      _count: {
+        select: { words: true },
+      },
+    },
+  })
+}
+
+export async function createWordSet(formData: FormData) {
+  await requireAdmin()
+
+  const name = formData.get('name') as string
+  const description = formData.get('description') as string
+  const color = formData.get('color') as string || '#1976d2'
+
+  try {
+    const wordSet = await prisma.wordSet.create({
+      data: {
+        name: name.trim(),
+        description: description?.trim() || null,
+        color,
+      },
+    })
+    revalidatePath('/admin/wordsets')
+    revalidatePath('/admin/words')
+    return { success: true, wordSet }
+  } catch (error) {
+    console.error('Error creating word set:', error)
+    return { success: false, error: '创建单词集失败，名称可能已存在' }
+  }
+}
+
+export async function updateWordSet(
+  wordSetId: string,
+  data: {
+    name?: string
+    description?: string
+    color?: string
+    isActive?: boolean
+  }
+) {
+  await requireAdmin()
+
+  try {
+    const wordSet = await prisma.wordSet.update({
+      where: { id: wordSetId },
+      data,
+    })
+    revalidatePath('/admin/wordsets')
+    revalidatePath('/admin/words')
+    return { success: true, wordSet }
+  } catch (error) {
+    console.error('Error updating word set:', error)
+    return { success: false, error: '更新单词集失败' }
+  }
+}
+
+export async function deleteWordSet(wordSetId: string) {
+  await requireAdmin()
+
+  try {
+    // 先检查是否存在
+    const existing = await prisma.wordSet.findUnique({
+      where: { id: wordSetId },
+    })
+
+    if (!existing) {
+      return { success: false, error: '单词集不存在或已被删除' }
+    }
+
+    // 删除单词集（关联的单词的 wordSetId 会被设为 null）
+    await prisma.wordSet.delete({ where: { id: wordSetId } })
+    revalidatePath('/admin/wordsets')
+    revalidatePath('/admin/words')
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting word set:', error)
+    return { success: false, error: '删除单词集失败' }
+  }
+}
+
 // ==================== Word Management ====================
 
 export async function addWord(formData: FormData) {
@@ -16,6 +118,7 @@ export async function addWord(formData: FormData) {
   const word = formData.get('word') as string
   const definition = formData.get('definition') as string
   const difficulty = parseInt(formData.get('difficulty') as string) || 1
+  const wordSetId = formData.get('wordSetId') as string || null
 
   try {
     // Generate AI content
@@ -31,6 +134,7 @@ export async function addWord(formData: FormData) {
         exampleSentence: aiContent.exampleSentence,
         exampleCn: aiContent.exampleCn,
         difficulty,
+        wordSetId: wordSetId || null,
       },
     })
 
@@ -58,6 +162,15 @@ export async function deleteWord(wordId: string) {
   await requireAdmin()
 
   try {
+    // 先检查单词是否存在
+    const existing = await prisma.word.findUnique({
+      where: { id: wordId },
+    })
+
+    if (!existing) {
+      return { success: false, error: '单词不存在或已被删除' }
+    }
+
     await prisma.word.delete({ where: { id: wordId } })
     revalidatePath('/admin/words')
     return { success: true }
@@ -67,12 +180,21 @@ export async function deleteWord(wordId: string) {
   }
 }
 
-export async function getWords() {
+export async function getWords(wordSetId?: string | null) {
   await requireAdmin()
 
+  // Handle special case for uncategorized words
+  const whereClause = wordSetId === 'none'
+    ? { wordSetId: null }
+    : wordSetId
+      ? { wordSetId }
+      : undefined
+
   return prisma.word.findMany({
+    where: whereClause,
     orderBy: { createdAt: 'desc' },
     include: {
+      wordSet: true,
       _count: {
         select: { quizOptions: true },
       },
@@ -91,6 +213,7 @@ export async function updateWord(
     exampleCn?: string
     difficulty?: number
     isActive?: boolean
+    wordSetId?: string | null
   }
 ) {
   await requireAdmin()
@@ -111,6 +234,7 @@ export async function updateWord(
 // Bulk import words
 export async function bulkAddWords(
   words: Array<{ word: string; definition: string }>,
+  wordSetId?: string | null,
   _onProgress?: (index: number, total: number, result: { word: string; success: boolean; error?: string }) => void
 ) {
   await requireAdmin()
@@ -119,14 +243,15 @@ export async function bulkAddWords(
 
   for (let i = 0; i < words.length; i++) {
     const { word, definition } = words[i]
+    const normalizedWord = word.trim()
 
     try {
-      // Check if word already exists
-      const existing = await prisma.word.findUnique({
-        where: { word: word.trim().toLowerCase() },
-      })
+      // Check if word already exists (SQLite uses COLLATE NOCASE for case-insensitive)
+      const existing = await prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM words WHERE word = ${normalizedWord} COLLATE NOCASE LIMIT 1
+      `
 
-      if (existing) {
+      if (existing.length > 0) {
         results.push({
           word,
           success: false,
@@ -145,30 +270,42 @@ export async function bulkAddWords(
       // Create word
       const newWord = await prisma.word.create({
         data: {
-          word: word.trim(),
+          word: normalizedWord,
           definition: finalDefinition,
           pronunciation: aiContent.pronunciation || '',
           definitionCn: aiContent.definitionCn || '',
           exampleSentence: aiContent.exampleSentence,
           exampleCn: aiContent.exampleCn,
           difficulty: 2,
+          wordSetId: wordSetId || null,
         },
       })
 
-      // Generate quiz options
-      try {
-        const distractors = await generateQuizOptions(word, finalDefinition, 3)
+      // Generate quiz options only if word was created successfully
+      if (newWord && newWord.id) {
+        try {
+          const distractors = await generateQuizOptions(word, finalDefinition, 3)
 
-        await prisma.quizOption.createMany({
-          data: distractors.map((distractor) => ({
-            wordId: newWord.id,
-            optionText: distractor,
-            isCorrect: false,
-          })),
-        })
-      } catch (quizError) {
-        console.warn(`Failed to generate quiz options for ${word}:`, quizError)
-        // Continue even if quiz options fail
+          if (distractors && distractors.length > 0) {
+            // Verify the word still exists before creating quiz options
+            const wordExists = await prisma.word.findUnique({
+              where: { id: newWord.id },
+            })
+
+            if (wordExists) {
+              await prisma.quizOption.createMany({
+                data: distractors.map((distractor) => ({
+                  wordId: newWord.id,
+                  optionText: distractor,
+                  isCorrect: false,
+                })),
+              })
+            }
+          }
+        } catch (quizError) {
+          console.warn(`Failed to generate quiz options for ${word}:`, quizError)
+          // Continue even if quiz options fail
+        }
       }
 
       results.push({ word, success: true })
@@ -275,13 +412,19 @@ export async function resetPassword(userId: string, newPassword: string) {
 
 // ==================== Learning Functions ====================
 
-export async function getDueWordsForUser() {
+export async function getDueWordsForUser(wordSetId?: string | null) {
   const session = await requireAuth()
   const userId = session.user.id
 
-  // Get all learning records for user
+  // Build word filter based on wordSetId
+  const wordFilter = wordSetId ? { wordSetId } : {}
+
+  // Get all learning records for user (filtered by word set if specified)
   const records = await prisma.learningRecord.findMany({
-    where: { userId },
+    where: {
+      userId,
+      word: wordSetId ? { wordSetId } : undefined,
+    },
     include: { word: true },
   })
 
@@ -295,6 +438,7 @@ export async function getDueWordsForUser() {
       where: {
         isActive: true,
         id: { notIn: learnedWordIds },
+        ...wordFilter,
       },
       take: 10,
       orderBy: { difficulty: 'asc' },

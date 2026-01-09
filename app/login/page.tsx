@@ -61,6 +61,9 @@ export default function LoginPage() {
             <Typography variant="h4" component="h1" gutterBottom textAlign="center" fontWeight={600}>
               英语单词训练
             </Typography>
+            <Typography variant="body2" color="text.secondary" textAlign="center" mb={1}>
+              内部学习使用
+            </Typography>
             <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
               登录以继续学习
             </Typography>
