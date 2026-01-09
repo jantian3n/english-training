@@ -67,6 +67,47 @@ export async function deleteWord(wordId: string) {
   }
 }
 
+export async function getWords() {
+  await requireAdmin()
+
+  return prisma.word.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      _count: {
+        select: { quizOptions: true },
+      },
+    },
+  })
+}
+
+export async function updateWord(
+  wordId: string,
+  data: {
+    word?: string
+    definition?: string
+    definitionCn?: string
+    pronunciation?: string
+    exampleSentence?: string
+    exampleCn?: string
+    difficulty?: number
+    isActive?: boolean
+  }
+) {
+  await requireAdmin()
+
+  try {
+    const updatedWord = await prisma.word.update({
+      where: { id: wordId },
+      data,
+    })
+    revalidatePath('/admin/words')
+    return { success: true, word: updatedWord }
+  } catch (error) {
+    console.error('Error updating word:', error)
+    return { success: false, error: 'Failed to update word' }
+  }
+}
+
 // Bulk import words
 export async function bulkAddWords(
   words: Array<{ word: string; definition: string }>,
