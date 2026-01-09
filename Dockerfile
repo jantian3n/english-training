@@ -26,9 +26,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Initialize database with schema
+# Initialize database with schema and seed data
 ENV DATABASE_URL="file:/app/prisma/data/dev.db"
-RUN mkdir -p /app/prisma/data && npx prisma db push --skip-generate
+RUN mkdir -p /app/prisma/data && npx prisma db push --skip-generate && npx tsx prisma/seed.ts
 
 # Build Next.js application
 RUN npm run build
