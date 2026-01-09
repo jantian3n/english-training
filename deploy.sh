@@ -11,8 +11,6 @@ echo "🚀 Starting deployment..."
 
 # Configuration
 PROJECT_DIR="/opt/english-training"
-REPO_URL="https://github.com/yourusername/english-training.git"  # Change this!
-BRANCH="main"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -33,12 +31,6 @@ print_error() {
     echo -e "${RED}✗ $1${NC}"
 }
 
-# Check if git is installed
-if ! command -v git &> /dev/null; then
-    print_error "Git is not installed. Please install git first."
-    exit 1
-fi
-
 # Check if docker is installed
 if ! command -v docker &> /dev/null; then
     print_error "Docker is not installed. Please install docker first."
@@ -51,22 +43,14 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Step 1: Navigate to project directory or clone
+# Step 1: Navigate to project directory
 if [ -d "$PROJECT_DIR" ]; then
     print_success "Project directory exists"
     cd "$PROJECT_DIR"
-
-    # Pull latest changes
-    echo "📥 Pulling latest code from Git..."
-    git fetch origin
-    git reset --hard origin/$BRANCH
-    print_success "Code updated to latest version"
 else
-    print_warning "Project directory not found. Cloning repository..."
-    mkdir -p "$PROJECT_DIR"
-    git clone -b "$BRANCH" "$REPO_URL" "$PROJECT_DIR"
-    cd "$PROJECT_DIR"
-    print_success "Repository cloned"
+    print_error "Project directory not found: $PROJECT_DIR"
+    print_error "Please clone the repository first and try again."
+    exit 1
 fi
 
 # Step 2: Ensure .env file exists
