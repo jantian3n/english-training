@@ -9,8 +9,8 @@ set -e  # Exit on error
 
 echo "🚀 Starting deployment..."
 
-# Configuration
-PROJECT_DIR="/opt/english-training"
+# Configuration - change this to your actual project directory
+PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 
 # Colors for output
 GREEN='\033[0;32m'
