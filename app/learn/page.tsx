@@ -244,7 +244,7 @@ export default function LearnPage() {
           {currentIndex + 1} / {words.length}
         </Typography>
 
-        <LearningCard word={words[currentIndex]} options={options} onComplete={handleComplete} />
+        <LearningCard key={words[currentIndex].id} word={words[currentIndex]} options={options} onComplete={handleComplete} />
       </Box>
     </Container>
   )
