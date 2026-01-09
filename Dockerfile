@@ -49,6 +49,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
+COPY --from=builder /app/prisma/data/dev.db ./prisma/dev.db.template
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # CRITICAL: Create directory for SQLite database
@@ -63,5 +64,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application (init DB if not exists)
+CMD ["sh", "-c", "if [ ! -f /app/prisma/data/dev.db ]; then cp /app/prisma/dev.db.template /app/prisma/data/dev.db; fi && node server.js"]
