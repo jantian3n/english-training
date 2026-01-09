@@ -18,13 +18,13 @@ export async function middleware(request: NextRequest) {
 
   // If authenticated and trying to access login page
   if (session && request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/learn', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Admin route protection
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/learn', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 

@@ -13,15 +13,23 @@ import {
   LinearProgress,
   Stack,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar,
 } from '@mui/material'
 import {
   School as SchoolIcon,
   Timer as TimerIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
+  EmojiEvents as TrophyIcon,
 } from '@mui/icons-material'
-import { getUserStats } from '@/app/actions'
-import { signOut } from 'next-auth/react'
+import { getUserStats, getLeaderboard } from '@/app/actions'
 
 interface Stats {
   totalWords: number
@@ -32,13 +40,24 @@ interface Stats {
   accuracy: number
 }
 
+interface LeaderboardEntry {
+  id: string
+  name: string
+  totalReviews: number
+  correctCount: number
+  accuracy: number
+  wordsLearned: number
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadStats()
+    loadLeaderboard()
   }, [])
 
   const loadStats = async () => {
@@ -52,14 +71,19 @@ export default function DashboardPage() {
     }
   }
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+  const loadLeaderboard = async () => {
+    try {
+      const data = await getLeaderboard()
+      setLeaderboard(data)
+    } catch (error) {
+      console.error('Error loading leaderboard:', error)
+    }
   }
 
   if (loading) {
     return (
       <Container>
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
           <LinearProgress sx={{ width: '100%' }} />
         </Box>
       </Container>
@@ -69,15 +93,10 @@ export default function DashboardPage() {
   return (
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h3" fontWeight={600}>
-            Dashboard
-          </Typography>
-          <Button variant="outlined" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Box>
+        {/* Page Title */}
+        <Typography variant="h4" fontWeight={600} mb={4}>
+          学习中心
+        </Typography>
 
         {/* Stats Cards */}
         <Grid container spacing={3} mb={4}>
@@ -92,7 +111,7 @@ export default function DashboardPage() {
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    Total Words Learning
+                    学习中的单词
                   </Typography>
                 </Stack>
               </CardContent>
@@ -110,7 +129,7 @@ export default function DashboardPage() {
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    Due Today
+                    今日待复习
                   </Typography>
                 </Stack>
               </CardContent>
@@ -128,7 +147,7 @@ export default function DashboardPage() {
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    Correct Answers
+                    回答正确
                   </Typography>
                 </Stack>
               </CardContent>
@@ -146,7 +165,7 @@ export default function DashboardPage() {
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    Incorrect Answers
+                    回答错误
                   </Typography>
                 </Stack>
               </CardContent>
@@ -158,7 +177,7 @@ export default function DashboardPage() {
         <Card sx={{ mb: 4 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Overall Accuracy
+              总体正确率
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <Box sx={{ flex: 1, mr: 2 }}>
@@ -173,7 +192,7 @@ export default function DashboardPage() {
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              {stats?.totalReviews || 0} total reviews completed
+              已完成 {stats?.totalReviews || 0} 次复习
             </Typography>
           </CardContent>
         </Card>
@@ -184,10 +203,10 @@ export default function DashboardPage() {
             <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
               <CardContent>
                 <Typography variant="h5" gutterBottom fontWeight={600}>
-                  Start Learning
+                  开始学习
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
-                  {stats?.dueToday || 0} words are waiting for review
+                  有 {stats?.dueToday || 0} 个单词等待复习
                 </Typography>
                 <Button
                   variant="contained"
@@ -200,7 +219,7 @@ export default function DashboardPage() {
                     '&:hover': { bgcolor: 'grey.100' },
                   }}
                 >
-                  Begin Review
+                  开始复习
                 </Button>
               </CardContent>
             </Card>
@@ -210,15 +229,15 @@ export default function DashboardPage() {
             <Card>
               <CardContent>
                 <Typography variant="h5" gutterBottom fontWeight={600}>
-                  Learning Streak
+                  学习进度
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Keep up the great work!
+                  继续保持！
                 </Typography>
                 <Stack direction="row" spacing={1}>
-                  <Chip label="🔥 Active Learner" color="warning" />
+                  <Chip label="🔥 活跃学习者" color="warning" />
                   <Chip
-                    label={`${stats?.totalWords || 0} Words`}
+                    label={`${stats?.totalWords || 0} 个单词`}
                     color="primary"
                     variant="outlined"
                   />
@@ -227,6 +246,90 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Leaderboard */}
+        <Card sx={{ mt: 4 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <TrophyIcon sx={{ color: 'warning.main', mr: 1, fontSize: 28 }} />
+              <Typography variant="h5" fontWeight={600}>
+                学习排行榜
+              </Typography>
+            </Box>
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.50' }}>
+                    <TableCell width={60}>排名</TableCell>
+                    <TableCell>用户</TableCell>
+                    <TableCell align="center">学习单词</TableCell>
+                    <TableCell align="center">复习次数</TableCell>
+                    <TableCell align="center">正确率</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {leaderboard.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Typography color="text.secondary">
+                          暂无排名数据，快来成为第一名！
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    leaderboard.map((entry, index) => (
+                      <TableRow key={entry.id} hover>
+                        <TableCell>
+                          {index < 3 ? (
+                            <Avatar
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                bgcolor:
+                                  index === 0
+                                    ? 'warning.main'
+                                    : index === 1
+                                      ? 'grey.400'
+                                      : 'warning.dark',
+                                fontSize: 14,
+                              }}
+                            >
+                              {index + 1}
+                            </Avatar>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary" sx={{ pl: 1 }}>
+                              {index + 1}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography fontWeight={index < 3 ? 600 : 400}>
+                            {entry.name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">{entry.wordsLearned}</TableCell>
+                        <TableCell align="center">{entry.totalReviews}</TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={`${entry.accuracy}%`}
+                            size="small"
+                            color={
+                              entry.accuracy >= 80
+                                ? 'success'
+                                : entry.accuracy >= 60
+                                  ? 'warning'
+                                  : 'default'
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
       </Box>
     </Container>
   )

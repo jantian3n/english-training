@@ -76,7 +76,7 @@ export default function UsersPage() {
   }
 
   const handleDeleteUser = async (userId: string) => {
-    if (confirm('Are you sure you want to delete this user?')) {
+    if (confirm('确定要删除这个用户吗？')) {
       await deleteUser(userId)
       loadUsers()
     }
@@ -93,10 +93,10 @@ export default function UsersPage() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4" fontWeight={600}>
-          User Management
+          用户管理
         </Typography>
         <Button variant="contained" onClick={() => setOpenCreate(true)}>
-          Add User
+          添加用户
         </Button>
       </Box>
 
@@ -104,11 +104,11 @@ export default function UsersPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Email</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Created At</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>邮箱</TableCell>
+              <TableCell>姓名</TableCell>
+              <TableCell>角色</TableCell>
+              <TableCell>创建时间</TableCell>
+              <TableCell align="right">操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -118,7 +118,7 @@ export default function UsersPage() {
                 <TableCell>{user.name}</TableCell>
                 <TableCell>
                   <Chip
-                    label={user.role}
+                    label={user.role === Role.ADMIN ? '管理员' : '用户'}
                     color={user.role === Role.ADMIN ? 'primary' : 'default'}
                     size="small"
                   />
@@ -146,11 +146,11 @@ export default function UsersPage() {
 
       {/* Create User Dialog */}
       <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New User</DialogTitle>
+        <DialogTitle>创建新用户</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Email"
+            label="邮箱"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -158,14 +158,14 @@ export default function UsersPage() {
           />
           <TextField
             fullWidth
-            label="Name"
+            label="姓名"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Password"
+            label="密码"
             type="password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -174,30 +174,30 @@ export default function UsersPage() {
           <TextField
             fullWidth
             select
-            label="Role"
+            label="角色"
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
             margin="normal"
           >
-            <MenuItem value={Role.USER}>User</MenuItem>
-            <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+            <MenuItem value={Role.USER}>用户</MenuItem>
+            <MenuItem value={Role.ADMIN}>管理员</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCreate(false)}>Cancel</Button>
+          <Button onClick={() => setOpenCreate(false)}>取消</Button>
           <Button variant="contained" onClick={handleCreateUser}>
-            Create
+            创建
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Reset Password Dialog */}
       <Dialog open={openResetPwd} onClose={() => setOpenResetPwd(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Reset Password</DialogTitle>
+        <DialogTitle>重置密码</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="New Password"
+            label="新密码"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -206,9 +206,9 @@ export default function UsersPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenResetPwd(false)}>Cancel</Button>
+          <Button onClick={() => setOpenResetPwd(false)}>取消</Button>
           <Button variant="contained" onClick={handleResetPassword}>
-            Reset
+            重置
           </Button>
         </DialogActions>
       </Dialog>

@@ -88,7 +88,10 @@ The distractors should:
 - NOT be the correct definition
 - Be concise (similar length to the correct definition)
 
-Return only a JSON array of strings: ["distractor1", "distractor2", "distractor3"]`
+Return in JSON format with a "distractors" key:
+{
+  "distractors": ["distractor1", "distractor2", "distractor3"]
+}`
 
     const completion = await openai.chat.completions.create({
       model: 'deepseek-chat',
@@ -96,7 +99,7 @@ Return only a JSON array of strings: ["distractor1", "distractor2", "distractor3
         {
           role: 'system',
           content:
-            'You are an expert at creating educational quiz content. Always respond in valid JSON format.',
+            'You are an expert at creating educational quiz content. Always respond in valid JSON format with a "distractors" array.',
         },
         {
           role: 'user',
@@ -114,10 +117,40 @@ Return only a JSON array of strings: ["distractor1", "distractor2", "distractor3
     }
 
     const parsed = JSON.parse(content)
-    const distractors = parsed.distractors || parsed.options || []
 
-    if (!Array.isArray(distractors) || distractors.length < count) {
-      throw new Error('Invalid distractors format')
+    // Try multiple possible keys the AI might use
+    let distractors: string[] = []
+    if (Array.isArray(parsed)) {
+      distractors = parsed
+    } else if (Array.isArray(parsed.distractors)) {
+      distractors = parsed.distractors
+    } else if (Array.isArray(parsed.options)) {
+      distractors = parsed.options
+    } else if (Array.isArray(parsed.definitions)) {
+      distractors = parsed.definitions
+    } else if (Array.isArray(parsed.incorrect_definitions)) {
+      distractors = parsed.incorrect_definitions
+    } else {
+      // Try to find any array in the response
+      const keys = Object.keys(parsed)
+      for (const key of keys) {
+        if (Array.isArray(parsed[key])) {
+          distractors = parsed[key]
+          break
+        }
+      }
+    }
+
+    if (distractors.length === 0) {
+      console.error('Parsed response:', parsed)
+      throw new Error('Invalid distractors format - no array found in response')
+    }
+
+    // Ensure we have string values and enough distractors
+    distractors = distractors.filter((d): d is string => typeof d === 'string')
+
+    if (distractors.length < count) {
+      console.warn(`Only got ${distractors.length} distractors, expected ${count}`)
     }
 
     return distractors.slice(0, count)

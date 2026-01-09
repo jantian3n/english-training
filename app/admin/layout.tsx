@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { Role } from '@prisma/client'
-import { Container, Typography, Box, AppBar, Toolbar, Button } from '@mui/material'
+import { Container, Box, Tabs, Tab, Paper } from '@mui/material'
 import Link from 'next/link'
-import { signOut } from '@/auth'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -13,38 +12,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   if (session.user.role !== Role.ADMIN) {
-    redirect('/learn')
+    redirect('/dashboard')
   }
 
   return (
-    <Box>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Admin Panel
-          </Typography>
-          <Button color="inherit" component={Link} href="/admin/users">
-            Users
-          </Button>
-          <Button color="inherit" component={Link} href="/admin/words">
-            Words
-          </Button>
-          <Button color="inherit" component={Link} href="/learn">
-            Learn
-          </Button>
-          <form
-            action={async () => {
-              'use server'
-              await signOut()
-            }}
-          >
-            <Button type="submit" color="inherit">
-              Logout
-            </Button>
-          </form>
-        </Toolbar>
-      </AppBar>
-      <Container sx={{ py: 4 }}>{children}</Container>
-    </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper sx={{ mb: 3 }}>
+        <Tabs value={false} variant="fullWidth">
+          <Tab label="用户管理" component={Link} href="/admin/users" />
+          <Tab label="单词管理" component={Link} href="/admin/words" />
+          <Tab label="批量导入" component={Link} href="/admin/import" />
+        </Tabs>
+      </Paper>
+      <Box>{children}</Box>
+    </Container>
   )
 }

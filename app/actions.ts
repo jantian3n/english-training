@@ -67,6 +67,96 @@ export async function deleteWord(wordId: string) {
   }
 }
 
+// Bulk import words
+export async function bulkAddWords(
+  words: Array<{ word: string; definition: string }>,
+  _onProgress?: (index: number, total: number, result: { word: string; success: boolean; error?: string }) => void
+) {
+  await requireAdmin()
+
+  const results: Array<{ word: string; success: boolean; error?: string }> = []
+
+  for (let i = 0; i < words.length; i++) {
+    const { word, definition } = words[i]
+
+    try {
+      // Check if word already exists
+      const existing = await prisma.word.findUnique({
+        where: { word: word.trim().toLowerCase() },
+      })
+
+      if (existing) {
+        results.push({
+          word,
+          success: false,
+          error: '单词已存在',
+        })
+        continue
+      }
+
+      // Generate AI content (use word as definition if not provided)
+      const actualDefinition = definition || `meaning of ${word}`
+      const aiContent = await generateWordContent(word, actualDefinition)
+
+      // Use AI-generated definition if none provided
+      const finalDefinition = definition || aiContent.definitionCn || actualDefinition
+
+      // Create word
+      const newWord = await prisma.word.create({
+        data: {
+          word: word.trim(),
+          definition: finalDefinition,
+          pronunciation: aiContent.pronunciation || '',
+          definitionCn: aiContent.definitionCn || '',
+          exampleSentence: aiContent.exampleSentence,
+          exampleCn: aiContent.exampleCn,
+          difficulty: 2,
+        },
+      })
+
+      // Generate quiz options
+      try {
+        const distractors = await generateQuizOptions(word, finalDefinition, 3)
+
+        await prisma.quizOption.createMany({
+          data: distractors.map((distractor) => ({
+            wordId: newWord.id,
+            optionText: distractor,
+            isCorrect: false,
+          })),
+        })
+      } catch (quizError) {
+        console.warn(`Failed to generate quiz options for ${word}:`, quizError)
+        // Continue even if quiz options fail
+      }
+
+      results.push({ word, success: true })
+    } catch (error) {
+      console.error(`Error adding word "${word}":`, error)
+      const errorMessage = error instanceof Error ? error.message : '添加失败'
+      results.push({ word, success: false, error: errorMessage })
+    }
+
+    // Small delay to avoid rate limiting
+    if (i < words.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  }
+
+  revalidatePath('/admin/words')
+  revalidatePath('/admin/import')
+
+  return {
+    success: true,
+    results,
+    summary: {
+      total: words.length,
+      success: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+    },
+  }
+}
+
 // ==================== User Management ====================
 
 export async function getUsers() {
@@ -241,7 +331,41 @@ export async function getQuizOptions(wordId: string) {
     select: { optionText: true },
   })
 
-  return options.map((opt) => opt.optionText)
+  // If options exist, return them
+  if (options.length >= 3) {
+    return options.map((opt) => opt.optionText)
+  }
+
+  // Otherwise, generate options on-the-fly
+  try {
+    const word = await prisma.word.findUnique({
+      where: { id: wordId },
+    })
+
+    if (!word) {
+      return []
+    }
+
+    // Generate new quiz options
+    const distractors = await generateQuizOptions(word.word, word.definition, 3)
+
+    // Store them for future use
+    if (distractors.length > 0) {
+      await prisma.quizOption.createMany({
+        data: distractors.map((distractor) => ({
+          wordId,
+          optionText: distractor,
+          isCorrect: false,
+        })),
+        skipDuplicates: true,
+      })
+    }
+
+    return distractors
+  } catch (error) {
+    console.error('Error generating quiz options:', error)
+    return []
+  }
 }
 
 export async function getUserStats() {
@@ -275,4 +399,71 @@ export async function getUserStats() {
     dueToday,
     accuracy: Math.round(accuracy * 10) / 10,
   }
+}
+
+// ==================== Leaderboard ====================
+
+export async function getLeaderboard() {
+  await requireAuth()
+
+  // Get all users with their learning records aggregated
+  const users = await prisma.user.findMany({
+    where: { role: Role.USER },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      learningRecords: {
+        select: {
+          totalReviews: true,
+          correctCount: true,
+        },
+      },
+    },
+  })
+
+  // Also get admin users
+  const admins = await prisma.user.findMany({
+    where: { role: Role.ADMIN },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      learningRecords: {
+        select: {
+          totalReviews: true,
+          correctCount: true,
+        },
+      },
+    },
+  })
+
+  const allUsers = [...users, ...admins]
+
+  // Calculate stats for each user
+  const leaderboardData = allUsers.map((user) => {
+    const totalReviews = user.learningRecords.reduce((sum, r) => sum + r.totalReviews, 0)
+    const correctCount = user.learningRecords.reduce((sum, r) => sum + r.correctCount, 0)
+    const accuracy = totalReviews > 0 ? (correctCount / totalReviews) * 100 : 0
+    const wordsLearned = user.learningRecords.length
+
+    return {
+      id: user.id,
+      name: user.name || user.email.split('@')[0],
+      totalReviews,
+      correctCount,
+      accuracy: Math.round(accuracy * 10) / 10,
+      wordsLearned,
+    }
+  })
+
+  // Sort by total reviews (descending), then by accuracy
+  return leaderboardData
+    .sort((a, b) => {
+      if (b.totalReviews !== a.totalReviews) {
+        return b.totalReviews - a.totalReviews
+      }
+      return b.accuracy - a.accuracy
+    })
+    .slice(0, 10) // Top 10
 }

@@ -113,7 +113,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
                 }}
               >
                 <Typography variant="body1" gutterBottom>
-                  <strong>Example:</strong> {word.exampleSentence}
+                  <strong>例句：</strong> {word.exampleSentence}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {word.exampleCn}
@@ -121,7 +121,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
               </Box>
 
               <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-                What does this word mean?
+                这个单词是什么意思？
               </Typography>
 
               <FormControl component="fieldset" fullWidth>
@@ -158,7 +158,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
                 disabled={!selectedDefinition}
                 sx={{ mt: 3 }}
               >
-                Continue
+                继续
               </Button>
             </Box>
           </Fade>
@@ -170,10 +170,10 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
             <Box>
               <Stack direction="row" alignItems="center" spacing={2} mb={3}>
                 <Typography variant="h5" fontWeight={600}>
-                  Spell the word
+                  拼写单词
                 </Typography>
                 <Chip
-                  label={isCorrectDefinition ? 'Correct!' : 'Incorrect'}
+                  label={isCorrectDefinition ? '正确!' : '错误'}
                   color={isCorrectDefinition ? 'success' : 'error'}
                   size="small"
                 />
@@ -188,7 +188,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
                 }}
               >
                 <Typography variant="body1" gutterBottom>
-                  <strong>Definition:</strong> {word.definition}
+                  <strong>释义：</strong> {word.definition}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {word.definitionCn}
@@ -196,13 +196,13 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
               </Box>
 
               <Typography variant="body1" gutterBottom>
-                Listen to the pronunciation and type the word:
+                根据释义输入单词拼写：
               </Typography>
 
               <TextField
                 fullWidth
                 variant="outlined"
-                placeholder="Type the word here..."
+                placeholder="在此输入单词..."
                 value={spellingInput}
                 onChange={(e) => setSpellingInput(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -218,7 +218,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
                 disabled={!spellingInput.trim()}
                 sx={{ mt: 3 }}
               >
-                Submit
+                提交
               </Button>
             </Box>
           </Fade>
@@ -229,22 +229,22 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
           <Fade in timeout={500}>
             <Box>
               <Typography variant="h5" gutterBottom fontWeight={600} textAlign="center">
-                Result
+                结果
               </Typography>
 
               <Stack spacing={2} mt={3}>
                 <Alert severity={isCorrectDefinition ? 'success' : 'error'}>
-                  <strong>Definition:</strong>{' '}
-                  {isCorrectDefinition ? 'Correct!' : 'Incorrect'}
+                  <strong>释义：</strong>{' '}
+                  {isCorrectDefinition ? '正确!' : '错误'}
                 </Alert>
 
                 <Alert severity={isCorrectSpelling ? 'success' : 'error'}>
-                  <strong>Spelling:</strong> {isCorrectSpelling ? 'Correct!' : 'Incorrect'}
+                  <strong>拼写：</strong> {isCorrectSpelling ? '正确!' : '错误'}
                   {!isCorrectSpelling && (
                     <Typography variant="body2" sx={{ mt: 1 }}>
-                      You typed: <strong>{spellingInput}</strong>
+                      你输入的：<strong>{spellingInput}</strong>
                       <br />
-                      Correct spelling: <strong>{word.word}</strong>
+                      正确拼写：<strong>{word.word}</strong>
                     </Typography>
                   )}
                 </Alert>
@@ -259,7 +259,7 @@ export default function LearningCard({ word, options, onComplete }: LearningCard
                 }}
               >
                 <Typography variant="body2" color="text.secondary" textAlign="center">
-                  Loading next word...
+                  正在加载下一个单词...
                 </Typography>
               </Box>
             </Box>

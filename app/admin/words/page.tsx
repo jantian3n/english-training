@@ -41,14 +41,14 @@ export default function WordsPage() {
     const result = await addWord(form)
 
     if (result.success) {
-      setSuccess('Word added successfully with AI-generated content!')
+      setSuccess('单词添加成功，AI已自动生成内容！')
       setFormData({ word: '', definition: '', difficulty: 1 })
       setTimeout(() => {
         setOpen(false)
         setSuccess('')
       }, 2000)
     } else {
-      setError(result.error || 'Failed to add word')
+      setError(result.error || '添加单词失败')
     }
 
     setLoading(false)
@@ -58,25 +58,25 @@ export default function WordsPage() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4" fontWeight={600}>
-          Word Management
+          单词管理
         </Typography>
         <Button variant="contained" onClick={() => setOpen(true)}>
-          Add Word
+          添加单词
         </Button>
       </Box>
 
       <Alert severity="info">
-        When you add a word, AI will automatically generate:
+        添加单词时，AI会自动生成：
         <ul>
-          <li>Example sentence with Chinese translation</li>
-          <li>Pronunciation (IPA notation)</li>
-          <li>Chinese definition</li>
-          <li>Quiz distractor options</li>
+          <li>例句及中文翻译</li>
+          <li>音标（IPA格式）</li>
+          <li>中文释义</li>
+          <li>测验干扰项</li>
         </ul>
       </Alert>
 
       <Dialog open={open} onClose={() => !loading && setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Word</DialogTitle>
+        <DialogTitle>添加新单词</DialogTitle>
         <DialogContent>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -91,7 +91,7 @@ export default function WordsPage() {
 
           <TextField
             fullWidth
-            label="Word"
+            label="单词"
             value={formData.word}
             onChange={(e) => setFormData({ ...formData, word: e.target.value })}
             margin="normal"
@@ -99,7 +99,7 @@ export default function WordsPage() {
           />
           <TextField
             fullWidth
-            label="Definition (English)"
+            label="释义（英文）"
             value={formData.definition}
             onChange={(e) => setFormData({ ...formData, definition: e.target.value })}
             margin="normal"
@@ -110,7 +110,7 @@ export default function WordsPage() {
           <TextField
             fullWidth
             select
-            label="Difficulty"
+            label="难度"
             value={formData.difficulty}
             onChange={(e) => setFormData({ ...formData, difficulty: parseInt(e.target.value) })}
             margin="normal"
@@ -118,7 +118,7 @@ export default function WordsPage() {
           >
             {[1, 2, 3, 4, 5].map((level) => (
               <MenuItem key={level} value={level}>
-                Level {level}
+                难度 {level}
               </MenuItem>
             ))}
           </TextField>
@@ -127,17 +127,17 @@ export default function WordsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
               <CircularProgress size={20} sx={{ mr: 2 }} />
               <Typography variant="body2" color="text.secondary">
-                Generating AI content...
+                正在生成AI内容...
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)} disabled={loading}>
-            Cancel
+            取消
           </Button>
           <Button variant="contained" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Processing...' : 'Add Word'}
+            {loading ? '处理中...' : '添加单词'}
           </Button>
         </DialogActions>
       </Dialog>

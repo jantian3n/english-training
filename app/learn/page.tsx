@@ -83,7 +83,7 @@ export default function LearnPage() {
     return (
       <Container>
         <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="h5">No words to review today! Come back tomorrow.</Typography>
+          <Typography variant="h5">今天没有需要复习的单词！明天再来吧。</Typography>
         </Box>
       </Container>
     )
@@ -93,7 +93,7 @@ export default function LearnPage() {
     <Container>
       <Box sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom textAlign="center" fontWeight={600}>
-          Daily Review
+          每日复习
         </Typography>
         <Typography variant="body1" color="text.secondary" textAlign="center" mb={2}>
           {currentIndex + 1} / {words.length}

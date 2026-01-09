@@ -34,13 +34,13 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
+        setError('邮箱或密码错误')
       } else {
-        router.push('/learn')
+        router.push('/dashboard')
         router.refresh()
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError('发生错误，请重试')
     } finally {
       setLoading(false)
     }
@@ -59,10 +59,10 @@ export default function LoginPage() {
         <Card sx={{ width: '100%', maxWidth: 400 }}>
           <CardContent sx={{ p: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom textAlign="center" fontWeight={600}>
-              English Training
+              英语单词训练
             </Typography>
             <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-              Sign in to continue learning
+              登录以继续学习
             </Typography>
 
             {error && (
@@ -74,7 +74,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Email"
+                label="邮箱"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
               <TextField
                 fullWidth
-                label="Password"
+                label="密码"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -103,19 +103,9 @@ export default function LoginPage() {
                 disabled={loading}
                 sx={{ mt: 3 }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? '登录中...' : '登录'}
               </Button>
             </form>
-
-            <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                <strong>Demo Accounts:</strong>
-                <br />
-                Admin: admin@example.com / admin123
-                <br />
-                User: user@example.com / user123
-              </Typography>
-            </Box>
           </CardContent>
         </Card>
       </Box>
