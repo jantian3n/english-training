@@ -39,7 +39,12 @@ export default function UsersPage() {
   const [openResetPwd, setOpenResetPwd] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>('')
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    email: string
+    name: string
+    password: string
+    role: Role
+  }>({
     email: '',
     name: '',
     password: '',
